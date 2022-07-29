@@ -17,9 +17,34 @@ router.post(`/${routes.contests}`, auth, async (req, res) => {
   }
 });
 
+// GET /tasks?hidden=true
+// GET /tasks?limit=10&skip=0
+// GET /tasks/sortBy=createdAt:desc
 router.get(`/${routes.contests}`, auth, async (req, res) => {
+  const match = {};
+  const sort = {};
+  const isHidden = req.query.hidden;
+
+  if (isHidden) {
+    match['hidden'] = isHidden === 'true';
+  }
+
+  if (req.query.sortBy) {
+    const [ prop, value ] = req.query.sortBy.split(':');
+    
+    sort[prop] = value === 'desc' ? -1 : 1;
+  }
+
   try {
-    await req.user.populate('contests');
+    await req.user.populate({
+      path: 'contests',
+      match,
+      options: {
+        limit: parseInt(req.query.limit),
+        skip: parseInt(req.query.skip),
+        sort,
+      },
+    });
     // const contests = await Contest.find({ owner: req.user._id }); // alternative
 
     // res.send(contests); // alternative
@@ -53,7 +78,7 @@ router.patch(`/${routes.contests}/:id`, auth, async (req, res) => {
 
   try {
     const contest = await Contest.findOne({ _id, owner: req.user._id });
- 
+
     if (!contest) {
       res.status(404).send();
     }
@@ -70,7 +95,10 @@ router.delete(`/${routes.contests}/:id`, auth, async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const contest = await Contest.findOneAndDelete({_id, owner: req.user._id});
+    const contest = await Contest.findOneAndDelete({
+      _id,
+      owner: req.user._id,
+    });
 
     if (!contest) {
       return res.status(404).send();

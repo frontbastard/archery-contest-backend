@@ -44,7 +44,6 @@ const userSchema = new mongoose.Schema({
     default: 0,
   },
   blocked: { type: Boolean, default: false },
-  createdAt: { type: Date, default: new Date() },
   tokens: [
     {
       token: {
@@ -53,6 +52,8 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
+}, {
+  timestamps: true,
 });
 
 userSchema.virtual('contests', {
