@@ -1,6 +1,5 @@
 const express = require('express');
 require('./db/mongoose');
-const Contest = require('./models/contest');
 const userRouter = require('./routers/user');
 const contestRouter = require('./routers/contest');
 

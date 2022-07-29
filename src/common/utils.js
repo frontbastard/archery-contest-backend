@@ -1,8 +1,5 @@
 module.exports = {
-  getValidOperationStatus(body, updatesArr) {
-    const updates = Object.keys(body);
-    const allowedUpdates = updatesArr;
-
+  getValidOperationStatus(updates, allowedUpdates) {
     return updates.every((update) => allowedUpdates.includes(update));
   },
 };
