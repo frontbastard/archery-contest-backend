@@ -4,60 +4,69 @@ const bcrypt = require('bcryptjs');
 const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
 const {
-  tokenSecret,
-  tokenExpiresIn,
-  contestRef,
+  JWT_SECRET,
+  MODELS,
 } = require('../common/constants');
-const Contest = require('../models/contest');
+const ContestModel = require('../models/Contest');
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true, minlength: 2, trim: true },
-  email: {
-    type: String,
-    unique: true,
-    required: true,
-    minlength: 2,
-    trim: true,
-    lowercase: true,
-    validate(value) {
-      if (!validator.isEmail(value)) {
-        throw new Error('Email is invalid');
-      }
-    },
-  },
-  password: {
-    type: String,
-    required: true,
-    validate(value) {
-      if (!validator.isStrongPassword(value)) {
-        throw new Error('Please choose a stronger password');
-      }
-    },
-  },
-  age: {
-    type: Number,
-    validate(value) {
-      if (value < 0) {
-        throw new Error('Age must be a positive number');
-      }
-    },
-    default: 0,
-  },
-  blocked: { type: Boolean, default: false },
-  tokens: [
-    {
-      token: {
-        type: String,
-        required: true,
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, minlength: 2, trim: true },
+    email: {
+      type: String,
+      unique: true,
+      required: true,
+      minlength: 2,
+      trim: true,
+      lowercase: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error(`${value} is not a valid email`);
+        }
       },
     },
-  ],
-}, {
-  timestamps: true,
-});
+    password: {
+      type: String,
+      required: true,
+      validate(value) {
+        if (
+          !validator.isStrongPassword(value, {
+            minLength: 8,
+            minLowercase: 1,
+            minUppercase: 1,
+            minNumbers: 1,
+          })
+        ) {
+          throw new Error('Please choose a stronger password');
+        }
+      },
+    },
+    age: {
+      type: Number,
+      validate(value) {
+        if (value < 0) {
+          throw new Error('Age must be a positive number');
+        }
+      },
+      default: 0,
+    },
+    blocked: { type: Boolean, default: false },
+    tokens: [
+      {
+        token: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
 
 userSchema.virtual('contests', {
-  ref: contestRef,
+  ref: MODELS.CONTEST,
   localField: '_id',
   foreignField: 'owner',
 });
@@ -78,8 +87,8 @@ userSchema.methods.toJSON = function () {
 // Generate auth token
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
-  const token = jwt.sign({ _id: user._id.toString() }, tokenSecret, {
-    expiresIn: tokenExpiresIn,
+  const token = jwt.sign({ _id: user._id.toString() }, JWT_SECRET, {
+    expiresIn: '7d',
   });
 
   user.tokens = user.tokens.concat({ token });
@@ -90,7 +99,7 @@ userSchema.methods.generateAuthToken = async function () {
 
 // Check user password
 userSchema.statics.findByCredentials = async (email, password) => {
-  const user = await User.findOne({ email });
+  const user = await UserModel.findOne({ email });
 
   if (!user) {
     throw new Error('Unable to login');
@@ -108,7 +117,6 @@ userSchema.statics.findByCredentials = async (email, password) => {
 // Hash the plain text password before saving
 userSchema.pre('save', async function (next) {
   const user = this;
-  console.log(user)
 
   if (user.isModified('password')) {
     user.password = await bcrypt.hash(user.password, 8);
@@ -120,12 +128,11 @@ userSchema.pre('save', async function (next) {
 // Delete user tasks when user is removed
 userSchema.pre('remove', async function (next) {
   const user = this;
-console.log(user)
-  await Contest.deleteMany({ owner: user._id });
+  await ContestModel.deleteMany({ owner: user._id });
 
   next();
 });
 
-const User = mongoose.model('User', userSchema);
+const UserModel = mongoose.model(MODELS.USER, userSchema);
 
-module.exports = User;
+module.exports = UserModel;

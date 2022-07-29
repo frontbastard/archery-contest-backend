@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { userRef } = require('../common/constants');
+const { MODELS } = require('../common/constants');
 // const validator = require('validator');
 
 const contestSchema = new mongoose.Schema(
@@ -10,7 +10,7 @@ const contestSchema = new mongoose.Schema(
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref: userRef,
+      ref: MODELS.USER,
     },
   },
   {
@@ -18,6 +18,6 @@ const contestSchema = new mongoose.Schema(
   }
 );
 
-const Contest = mongoose.model('Contest', contestSchema);
+const ContestModel = mongoose.model(MODELS.CONTEST, contestSchema);
 
-module.exports = Contest;
+module.exports = ContestModel;

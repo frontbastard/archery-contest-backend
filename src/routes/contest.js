@@ -1,12 +1,10 @@
 const express = require('express');
 const router = new express.Router();
-const Contest = require('../models/contest');
-const { getValidOperationStatus } = require('../common/utils');
+const ContestModel = require('../models/Contest');
 const auth = require('../middleware/auth');
-const routes = require('../common/routes');
 
-router.post(`/${routes.contests}`, auth, async (req, res) => {
-  const contest = new Contest({ ...req.body, owner: req.user._id });
+router.post('/', auth, async (req, res) => {
+  const contest = new ContestModel({ ...req.body, owner: req.user._id });
 
   await contest.save();
 
@@ -20,7 +18,7 @@ router.post(`/${routes.contests}`, auth, async (req, res) => {
 // GET /tasks?hidden=true
 // GET /tasks?limit=10&skip=0
 // GET /tasks/sortBy=createdAt:desc
-router.get(`/${routes.contests}`, auth, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   const match = {};
   const sort = {};
   const isHidden = req.query.hidden;
@@ -45,7 +43,7 @@ router.get(`/${routes.contests}`, auth, async (req, res) => {
         sort,
       },
     });
-    // const contests = await Contest.find({ owner: req.user._id }); // alternative
+    // const contests = await ContestModel.find({ owner: req.user._id }); // alternative
 
     // res.send(contests); // alternative
     res.send(req.user.contests);
@@ -54,30 +52,34 @@ router.get(`/${routes.contests}`, auth, async (req, res) => {
   }
 });
 
-router.get(`/${routes.contests}/:id`, auth, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const contests = await Contest.findOne({ _id, owner: req.user._id });
+    const contest = await ContestModel.findOne({ _id, owner: req.user._id });
 
-    res.send(contests);
+    if (!contest) {
+      res.status(404).send('Contest not found');
+    }
+
+    res.send(contest);
   } catch (error) {
     res.status(500).send();
   }
 });
 
-router.patch(`/${routes.contests}/:id`, auth, async (req, res) => {
+router.patch('/:id', auth, async (req, res) => {
   const _id = req.params.id;
   const updates = Object.keys(req.body);
   const allowedUpdates = ['name', 'description'];
-  const isValidOperation = getValidOperationStatus(updates, allowedUpdates);
+  const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
 
   if (!isValidOperation) {
     return res.status(400).send({ error: 'Invalid updates' });
   }
 
   try {
-    const contest = await Contest.findOne({ _id, owner: req.user._id });
+    const contest = await ContestModel.findOne({ _id, owner: req.user._id });
 
     if (!contest) {
       res.status(404).send();
@@ -91,11 +93,11 @@ router.patch(`/${routes.contests}/:id`, auth, async (req, res) => {
   }
 });
 
-router.delete(`/${routes.contests}/:id`, auth, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const contest = await Contest.findOneAndDelete({
+    const contest = await ContestModel.findOneAndDelete({
       _id,
       owner: req.user._id,
     });
