@@ -1,6 +1,5 @@
 const express = require('express');
 const router = new express.Router();
-const UserModel = require('../models/User');
 const { authUser } = require('../middleware/auth');
 const {
   add,
@@ -12,11 +11,6 @@ const {
   update,
   remove,
 } = require('../controllers/user');
-const {
-  isUserParamsIDEqual,
-  canViewUsers,
-  canUpdateUsers,
-} = require('../permissions/user');
 
 router.post('/', add);
 router.post('/login', login);

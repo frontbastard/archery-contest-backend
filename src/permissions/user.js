@@ -5,21 +5,21 @@ const isUserParamsIDEqual = (user, id) => {
   return user._id.toString() === id;
 };
 
-const canViewUsers = (user) => {
+const canViewEveryUser = (user) => {
   return user.role === ROLE.ADMIN;
 };
 
-const canUpdateUsers = (user) => {
+const canUpdateEveryUser = (user) => {
   return user.role === ROLE.ADMIN;
 };
 
-const canDeleteUsers = (user) => {
+const canDeleteEveryUser = (user) => {
   return user.role === ROLE.ADMIN;
 };
 
 module.exports = {
   isUserParamsIDEqual,
-  canViewUsers,
-  canUpdateUsers,
-  canDeleteUsers,
+  canViewEveryUser,
+  canUpdateEveryUser,
+  canDeleteEveryUser,
 };
