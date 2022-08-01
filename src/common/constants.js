@@ -1,4 +1,9 @@
 module.exports = {
   JWT_SECRET: '&h3bv0)B@+Chbus-v&@!',
-  MODELS: { USER: 'User', CONTEST: 'Contest' },
+  MODEL: { USER: 'User', CONTEST: 'Contest' },
+  ROLE: {
+    ADMIN: 'admin',
+    MODERATOR: 'moderator',
+    USER: 'user',
+  }
 };
