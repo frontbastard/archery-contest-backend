@@ -1,9 +1,10 @@
 const express = require('express');
 const router = new express.Router();
 const ContestModel = require('../models/Contest');
-const auth = require('../middleware/auth');
+const { authUser } = require('../middleware/auth');
+const { canViewContest } = require('../permissions/contest');
 
-router.post('/', auth, async (req, res) => {
+router.post('/', authUser, async (req, res) => {
   const contest = new ContestModel({ ...req.body, owner: req.user._id });
 
   await contest.save();
@@ -15,10 +16,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// GET /tasks?hidden=true
-// GET /tasks?limit=10&skip=0
-// GET /tasks/sortBy=createdAt:desc
-router.get('/', auth, async (req, res) => {
+router.get('/', authUser, async (req, res) => {
   const match = {};
   const sort = {};
   const isHidden = req.query.hidden;
@@ -27,32 +25,29 @@ router.get('/', auth, async (req, res) => {
     match['hidden'] = isHidden === 'true';
   }
 
+  if (!canViewContest(req.user)) {
+    match['owner'] = req.user._id;
+  }
+
   if (req.query.sortBy) {
-    const [ prop, value ] = req.query.sortBy.split(':');
-    
+    const [prop, value] = req.query.sortBy.split(':');
+
     sort[prop] = value === 'desc' ? -1 : 1;
   }
 
   try {
-    await req.user.populate({
-      path: 'contests',
-      match,
-      options: {
-        limit: parseInt(req.query.limit),
-        skip: parseInt(req.query.skip),
-        sort,
-      },
-    });
-    // const contests = await ContestModel.find({ owner: req.user._id }); // alternative
+    const contests = await ContestModel.find(match)
+      .sort(sort)
+      .skip(parseInt(req.query.skip))
+      .limit(parseInt(req.query.limit));
 
-    // res.send(contests); // alternative
-    res.send(req.user.contests);
+    res.send(contests);
   } catch (error) {
     res.status(500).send();
   }
 });
 
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', authUser, async (req, res) => {
   const _id = req.params.id;
 
   try {
@@ -68,11 +63,13 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-router.patch('/:id', auth, async (req, res) => {
+router.patch('/:id', authUser, async (req, res) => {
   const _id = req.params.id;
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['name', 'description'];
-  const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
+  const allowedUpdates = ['name', 'description', 'hidden'];
+  const isValidOperation = updates.every((update) =>
+    allowedUpdates.includes(update)
+  );
 
   if (!isValidOperation) {
     return res.status(400).send({ error: 'Invalid updates' });
@@ -93,7 +90,7 @@ router.patch('/:id', auth, async (req, res) => {
   }
 });
 
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', authUser, async (req, res) => {
   const _id = req.params.id;
 
   try {

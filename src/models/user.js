@@ -3,10 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
-const {
-  JWT_SECRET,
-  MODELS,
-} = require('../common/constants');
+const { JWT_SECRET, MODEL, ROLE } = require('../common/constants');
 const ContestModel = require('../models/Contest');
 
 const userSchema = new mongoose.Schema(
@@ -59,17 +56,22 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    role: {
+      type: String,
+      required: true,
+      default: ROLE.USER,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-userSchema.virtual('contests', {
-  ref: MODELS.CONTEST,
-  localField: '_id',
-  foreignField: 'owner',
-});
+// userSchema.virtual('contests', {
+//   ref: MODEL.CONTEST,
+//   localField: '_id',
+//   foreignField: 'owner',
+// });
 
 userSchema.plugin(uniqueValidator);
 
@@ -133,6 +135,6 @@ userSchema.pre('remove', async function (next) {
   next();
 });
 
-const UserModel = mongoose.model(MODELS.USER, userSchema);
+const UserModel = mongoose.model(MODEL.USER, userSchema);
 
 module.exports = UserModel;
