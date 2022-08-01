@@ -1,9 +1,9 @@
 const UserModel = require('../models/User');
 const {
   isUserParamsIDEqual,
-  canViewUsers,
-  canUpdateUsers,
-  canDeleteUsers,
+  canViewEveryUser,
+  canUpdateEveryUser,
+  canDeleteEveryUser,
 } = require('../permissions/user');
 
 const add = async (req, res) => {
@@ -56,7 +56,7 @@ const logoutAll = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
-  if (!canViewUsers(req.user)) {
+  if (!canViewEveryUser(req.user)) {
     return res.status(402).send('Not allowed');
   }
 
@@ -93,7 +93,7 @@ const get = async (req, res) => {
     return res.send(req.user);
   }
 
-  if (!canViewUsers(req.user)) {
+  if (!canViewEveryUser(req.user)) {
     return res.status(402).send('Not allowed');
   }
 
@@ -118,7 +118,7 @@ const update = async (req, res) => {
   const isValidOperation = updates.every(
     (update) =>
       allowedUpdates.includes(update) ||
-      (canUpdateUsers(req.user) && update === 'blocked')
+      (canUpdateEveryUser(req.user) && update === 'blocked')
   );
 
   if (!isValidOperation) {
@@ -126,7 +126,7 @@ const update = async (req, res) => {
   }
 
   try {
-    const user = !canUpdateUsers(req.user)
+    const user = !canUpdateEveryUser(req.user)
       ? await req.user
       : await UserModel.findOne({ _id });
 
@@ -134,7 +134,7 @@ const update = async (req, res) => {
       return res.status(404).send();
     }
 
-    if (!isUserParamsIDEqual(req.user, _id) && !canUpdateUsers(req.user)) {
+    if (!isUserParamsIDEqual(req.user, _id) && !canUpdateEveryUser(req.user)) {
       return res.status(402).send('Not allowed');
     }
 
@@ -151,11 +151,11 @@ const remove = async (req, res) => {
   const _id = req.params.id;
 
   try {
-    if (!isUserParamsIDEqual(req.user, _id) && !canDeleteUsers(req.user)) {
+    if (!isUserParamsIDEqual(req.user, _id) && !canDeleteEveryUser(req.user)) {
       return res.status(402).send('Not allowed');
     }
 
-    if (!canDeleteUsers(req.user)) {
+    if (!canDeleteEveryUser(req.user)) {
       await req.user.remove();
       return res.send(req.user);
     }
