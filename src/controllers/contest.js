@@ -23,11 +23,11 @@ const getAll = async (req, res) => {
   const isHidden = req.query.hidden;
 
   if (isHidden) {
-    match['hidden'] = isHidden === 'true';
+    match.hidden = isHidden === 'true';
   }
 
   if (!canViewEveryContest(req.user)) {
-    match['owner'] = req.user._id;
+    match.owner = req.user._id;
   }
 
   if (req.query.sortBy) {
@@ -39,8 +39,8 @@ const getAll = async (req, res) => {
   try {
     const contests = await ContestModel.find(match)
       .sort(sort)
-      .skip(parseInt(req.query.skip))
-      .limit(parseInt(req.query.limit));
+      .skip(parseInt(req.query.skip, 10))
+      .limit(parseInt(req.query.limit, 10));
 
     res.send(contests);
   } catch (error) {
@@ -53,7 +53,7 @@ const get = async (req, res) => {
   const match = { _id };
 
   if (!canViewEveryContest(req.user)) {
-    match['owner'] = req.user._id;
+    match.owner = req.user._id;
   }
 
   try {
@@ -87,7 +87,7 @@ const update = async (req, res) => {
   }
 
   if (!canUpdateEveryContest) {
-    match['owner'] = req.user._id;
+    match.owner = req.user._id;
   }
 
   try {
@@ -97,11 +97,13 @@ const update = async (req, res) => {
       res.status(404).send();
     }
 
-    updates.forEach((update) => (contest[update] = req.body[update]));
+    updates.forEach((update) => {
+      contest[update] = req.body[update];
+    });
     await contest.save();
-    res.status(201).send(contest);
+    return res.status(201).send(contest);
   } catch (error) {
-    res.status(400).send(error);
+    return res.status(400).send(error);
   }
 };
 
@@ -114,7 +116,7 @@ const remove = async (req, res) => {
   }
 
   if (!canDeleteEveryContest) {
-    match['owner'] = req.user._id;
+    match.owner = req.user._id;
   }
 
   try {
@@ -124,9 +126,9 @@ const remove = async (req, res) => {
       return res.status(404).send();
     }
 
-    res.send(contest);
+    return res.send(contest);
   } catch (error) {
-    res.status(500).send(error);
+    return res.status(500).send(error);
   }
 };
 

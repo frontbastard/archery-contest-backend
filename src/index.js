@@ -11,5 +11,6 @@ app.use('/api/users', userRouter);
 app.use('/api/contests', contestRouter);
 
 app.listen(port, () => {
+  // eslint-disable-next-line no-console
   console.log(`Server is up on port ${port}`);
 });

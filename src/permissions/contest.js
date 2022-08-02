@@ -1,17 +1,13 @@
 const { ROLE } = require('../common/constants');
-const ContestModel = require('../models/Contest');
 
-const canViewEveryContest = (user) => {
-  return user.role === ROLE.ADMIN || user.role === ROLE.MODERATOR;
-};
+const canViewEveryContest = (user) =>
+  user.role === ROLE.ADMIN || user.role === ROLE.MODERATOR;
 
-const canUpdateEveryContest = (user) => {
-  return user.role === ROLE.ADMIN || user.role === ROLE.MODERATO;
-};
+const canUpdateEveryContest = (user) =>
+  user.role === ROLE.ADMIN || user.role === ROLE.MODERATOR;
 
-const canDeleteEveryContest = (user) => {
-  return user.role === ROLE.ADMIN || user.role === ROLE.MODERATO;
-};
+const canDeleteEveryContest = (user) =>
+  user.role === ROLE.ADMIN || user.role === ROLE.MODERATOR;
 
 module.exports = {
   canViewEveryContest,
