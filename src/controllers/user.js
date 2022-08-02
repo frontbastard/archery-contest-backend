@@ -78,8 +78,9 @@ const getAll = async (req, res) => {
       .sort(sort)
       .skip(parseInt(req.query.skip, 10))
       .limit(parseInt(req.query.limit, 10));
+    const counter = await UserModel.count({});
 
-    return res.send(users);
+    return res.send({ totalCount: counter, items: users });
   } catch (error) {
     return res.status(500).send();
   }
