@@ -4,9 +4,14 @@ const { MODEL } = require('../common/constants');
 
 const contestSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, minlength: 2, trim: true },
+    name: {
+      type: String,
+      required: true,
+      minlength: 2,
+      trim: true,
+    },
     description: { type: String, trim: true, default: '' },
-    hidden: {type: Boolean, default: false},
+    hidden: { type: Boolean, default: false },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,

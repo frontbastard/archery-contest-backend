@@ -19,11 +19,10 @@ const add = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const _email = req.body.email;
-  const _password = req.body.password;
+  const { email, password } = req.body;
 
   try {
-    const user = await UserModel.findByCredentials(_email, _password);
+    const user = await UserModel.findByCredentials(email, password);
     const token = await user.generateAuthToken();
     res.send({ user, token });
   } catch (error) {
@@ -65,7 +64,7 @@ const getAll = async (req, res) => {
   const isDisabled = req.query.disabled;
 
   if (isDisabled) {
-    match['disabled'] = isDisabled === 'true';
+    match.disabled = isDisabled === 'true';
   }
 
   if (req.query.sortBy) {
@@ -77,12 +76,12 @@ const getAll = async (req, res) => {
   try {
     const users = await UserModel.find(match)
       .sort(sort)
-      .skip(parseInt(req.query.skip))
-      .limit(parseInt(req.query.limit));
+      .skip(parseInt(req.query.skip, 10))
+      .limit(parseInt(req.query.limit, 10));
 
-    res.send(users);
+    return res.send(users);
   } catch (error) {
-    res.status(500).send();
+    return res.status(500).send();
   }
 };
 
@@ -104,9 +103,9 @@ const get = async (req, res) => {
       return res.status(404).send();
     }
 
-    res.send(user);
+    return res.send(user);
   } catch (error) {
-    res.status(500).send();
+    return res.status(500).send();
   }
 };
 
@@ -138,12 +137,14 @@ const update = async (req, res) => {
       return res.status(402).send('Not allowed');
     }
 
-    updates.forEach((update) => (user[update] = req.body[update]));
+    updates.forEach((update) => {
+      user[update] = req.body[update];
+    });
     await user.save();
 
-    res.send(user);
+    return res.send(user);
   } catch (error) {
-    res.status(400).send(error);
+    return res.status(400).send(error);
   }
 };
 
@@ -167,9 +168,9 @@ const remove = async (req, res) => {
     }
 
     user.remove();
-    res.send(user);
+    return res.send(user);
   } catch (error) {
-    res.status(500).send();
+    return res.status(500).send();
   }
 };
 

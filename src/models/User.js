@@ -4,11 +4,16 @@ const bcrypt = require('bcryptjs');
 const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET, MODEL, ROLE } = require('../common/constants');
-const ContestModel = require('../models/Contest');
+const ContestModel = require('./Contest');
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, minlength: 2, trim: true },
+    name: {
+      type: String,
+      required: true,
+      minlength: 2,
+      trim: true,
+    },
     email: {
       type: String,
       unique: true,
@@ -101,6 +106,7 @@ userSchema.methods.generateAuthToken = async function () {
 
 // Check user password
 userSchema.statics.findByCredentials = async (email, password) => {
+  // eslint-disable-next-line no-use-before-define
   const user = await UserModel.findOne({ email });
 
   if (!user) {
