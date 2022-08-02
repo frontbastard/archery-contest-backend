@@ -1,3 +1,4 @@
+const sharp = require('sharp');
 const UserModel = require('../models/User');
 const {
   isUserParamsIDEqual,
@@ -175,6 +176,38 @@ const remove = async (req, res) => {
   }
 };
 
+const uploadAvatar = async (req, res) => {
+  const buffer = await sharp(req.file.buffer)
+    .resize({ width: 250, height: 250 })
+    .png()
+    .toBuffer();
+  req.user.avatar = buffer;
+
+  await req.user.save();
+  res.send();
+};
+
+const getAvatar = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.params.id);
+
+    if (!user || !user.avatar) {
+      throw new Error();
+    }
+
+    res.set('Content-Type', 'image/png');
+    res.send(user.avatar);
+  } catch (error) {
+    res.status(404).send();
+  }
+};
+
+const removeAvatar = async (req, res) => {
+  req.user.avatar = undefined;
+  await req.user.save();
+  res.send();
+};
+
 module.exports = {
   add,
   login,
@@ -184,4 +217,7 @@ module.exports = {
   get,
   update,
   remove,
+  uploadAvatar,
+  getAvatar,
+  removeAvatar,
 };
