@@ -6,12 +6,14 @@ const {
   canUpdateEveryUser,
   canDeleteEveryUser,
 } = require('../permissions/user');
+const { sendWelcomeEmail, sendCancelEmail } = require('../emails/account');
 
 const add = async (req, res) => {
   const user = new UserModel(req.body);
 
   try {
     await user.save();
+    sendWelcomeEmail(user.email, user.name);
     const token = await user.generateAuthToken();
     res.status(201).send({ user, token });
   } catch (error) {
@@ -170,6 +172,7 @@ const remove = async (req, res) => {
     }
 
     user.remove();
+    sendCancelEmail(user.email, user.name);
     return res.send(user);
   } catch (error) {
     return res.status(500).send();

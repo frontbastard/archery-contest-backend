@@ -3,7 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET, MODEL, ROLE } = require('../common/constants');
+const { MODEL, ROLE } = require('../common/constants');
 const ContestModel = require('./Contest');
 
 const userSchema = new mongoose.Schema(
@@ -98,7 +98,7 @@ userSchema.methods.toJSON = function () {
 // Generate auth token
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
-  const token = jwt.sign({ _id: user._id.toString() }, JWT_SECRET, {
+  const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
 
