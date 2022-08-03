@@ -1,8 +1,9 @@
 const express = require('express');
 require('./db/mongoose');
+const cors = require('cors');
+
 const userRouter = require('./routes/user');
 const contestRouter = require('./routes/contest');
-const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 3000;
