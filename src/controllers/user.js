@@ -1,10 +1,10 @@
 const sharp = require('sharp');
 const UserModel = require('../models/User');
 const {
-  isUserParamsIDEqual,
-  canViewEveryUser,
-  canUpdateEveryUser,
-  canDeleteEveryUser,
+  isProfileOwner,
+  canViewUser,
+  canUpdateUser,
+  canDeleteUser,
 } = require('../permissions/user');
 const { sendWelcomeEmail, sendCancelEmail } = require('../emails/account');
 
@@ -58,16 +58,16 @@ const logoutAll = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
-  if (!canViewEveryUser(req.user)) {
+  if (!canViewUser(req.user)) {
     return res.status(402).send('Not allowed');
   }
 
   const match = {};
   const sort = {};
-  const isDisabled = req.query.disabled;
+  const isBlocked = req.query.blocked;
 
-  if (isDisabled) {
-    match.disabled = isDisabled === 'true';
+  if (isBlocked) {
+    match.blocked = isBlocked === 'true';
   }
 
   if (req.query.sortBy) {
@@ -92,12 +92,12 @@ const getAll = async (req, res) => {
 const get = async (req, res) => {
   const _id = req.params.id;
 
-  if (isUserParamsIDEqual(req.user, _id)) {
+  if (isProfileOwner(req.user, _id)) {
     return res.send(req.user);
   }
 
-  if (!canViewEveryUser(req.user)) {
-    return res.status(402).send('Not allowed');
+  if (!canViewUser(req.user)) {
+    return res.status(404).send();
   }
 
   try {
@@ -121,7 +121,7 @@ const update = async (req, res) => {
   const isValidOperation = updates.every(
     (update) =>
       allowedUpdates.includes(update) ||
-      (canUpdateEveryUser(req.user) && update === 'blocked')
+      (canUpdateUser(req.user) && update === 'blocked')
   );
 
   if (!isValidOperation) {
@@ -129,16 +129,12 @@ const update = async (req, res) => {
   }
 
   try {
-    const user = !canUpdateEveryUser(req.user)
+    const user = !canUpdateUser(req.user)
       ? await req.user
       : await UserModel.findOne({ _id });
 
-    if (!user) {
+    if (!user || (!isProfileOwner(req.user, _id) && !canUpdateUser(req.user))) {
       return res.status(404).send();
-    }
-
-    if (!isUserParamsIDEqual(req.user, _id) && !canUpdateEveryUser(req.user)) {
-      return res.status(402).send('Not allowed');
     }
 
     updates.forEach((update) => {
@@ -156,11 +152,11 @@ const remove = async (req, res) => {
   const _id = req.params.id;
 
   try {
-    if (!isUserParamsIDEqual(req.user, _id) && !canDeleteEveryUser(req.user)) {
-      return res.status(402).send('Not allowed');
+    if (!isProfileOwner(req.user, _id) && !canDeleteUser(req.user)) {
+      return res.status(404).send();
     }
 
-    if (!canDeleteEveryUser(req.user)) {
+    if (!canDeleteUser(req.user)) {
       await req.user.remove();
       return res.send(req.user);
     }
