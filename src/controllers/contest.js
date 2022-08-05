@@ -1,8 +1,8 @@
 const ContestModel = require('../models/Contest');
 const {
-  canViewEveryContest,
-  canUpdateEveryContest,
-  canDeleteEveryContest,
+  canViewContest,
+  canUpdateContest,
+  canDeleteContest,
 } = require('../permissions/contest');
 
 const add = async (req, res) => {
@@ -26,7 +26,7 @@ const getAll = async (req, res) => {
     match.hidden = isHidden === 'true';
   }
 
-  if (!canViewEveryContest(req.user)) {
+  if (!canViewContest(req.user)) {
     match.owner = req.user._id;
   }
 
@@ -52,7 +52,7 @@ const get = async (req, res) => {
   const _id = req.params.id;
   const match = { _id };
 
-  if (!canViewEveryContest(req.user)) {
+  if (!canViewContest(req.user)) {
     match.owner = req.user._id;
   }
 
@@ -86,7 +86,7 @@ const update = async (req, res) => {
     return res.status(400).send({ error: 'Invalid updates' });
   }
 
-  if (!canUpdateEveryContest) {
+  if (!canUpdateContest(req.user)) {
     match.owner = req.user._id;
   }
 
@@ -94,7 +94,7 @@ const update = async (req, res) => {
     const contest = await ContestModel.findOne(match);
 
     if (!contest) {
-      res.status(404).send();
+      return res.status(404).send();
     }
 
     updates.forEach((update) => {
@@ -115,7 +115,7 @@ const remove = async (req, res) => {
     return res.status(402).send({ error: 'You are blocked' });
   }
 
-  if (!canDeleteEveryContest) {
+  if (!canDeleteContest(req.user)) {
     match.owner = req.user._id;
   }
 

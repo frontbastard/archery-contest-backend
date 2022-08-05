@@ -1,16 +1,16 @@
 const { ROLE } = require('../common/constants');
 
-const canViewEveryContest = (user) =>
+const canViewContest = (user) =>
   user.role === ROLE.ADMIN || user.role === ROLE.MODERATOR;
 
-const canUpdateEveryContest = (user) =>
+const canUpdateContest = (user) =>
   user.role === ROLE.ADMIN || user.role === ROLE.MODERATOR;
 
-const canDeleteEveryContest = (user) =>
+const canDeleteContest = (user) =>
   user.role === ROLE.ADMIN || user.role === ROLE.MODERATOR;
 
 module.exports = {
-  canViewEveryContest,
-  canUpdateEveryContest,
-  canDeleteEveryContest,
+  canViewContest,
+  canUpdateContest,
+  canDeleteContest,
 };
