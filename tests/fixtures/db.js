@@ -64,13 +64,6 @@ const contestUserOne = {
   hidden: false,
   owner: userOne._id,
 };
-const contestUserOneHidden = {
-  _id: new mongoose.Types.ObjectId(),
-  name: 'Test contest 2',
-  description: 'Test contest description 2',
-  hidden: true,
-  owner: userOne._id,
-};
 const contestUserTwo = {
   _id: new mongoose.Types.ObjectId(),
   name: 'Test contest 3',
@@ -94,7 +87,6 @@ const setupDatabase = async () => {
   await new UserModel(userBlocked).save();
   await new UserModel(userAdmin).save();
   await new ContestModel(contestUserOne).save();
-  await new ContestModel(contestUserOneHidden).save();
   await new ContestModel(contestUserTwo).save();
   await new ContestModel(contestUserBlocked).save();
 };
@@ -107,7 +99,6 @@ module.exports = {
   userBlocked,
   userAdmin,
   contestUserOne,
-  contestUserOneHidden,
   contestUserTwo,
   contestUserBlocked,
   setupDatabase,

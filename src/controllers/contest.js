@@ -18,6 +18,9 @@ const add = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
+  // GET /contests?hidden=true
+  // GET /contests?limit=10&skip=0
+  // GET /contests/sortBy=createdAt:desc
   const match = {};
   const sort = {};
   const isHidden = req.query.hidden;
