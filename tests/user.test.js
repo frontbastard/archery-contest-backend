@@ -23,7 +23,6 @@ test('Should signup a new user', async () => {
 
   // Assert that the database was changed correctly
   const user = await UserModel.findById(response.body.user._id);
-
   expect(user).not.toBeNull();
 
   // Assertions about the response (only for one property)
@@ -40,6 +39,17 @@ test('Should signup a new user', async () => {
   expect(user.password).not.toBe('Red12345!');
 });
 
+test('Should not signup user with invalid name/email/password', async () => {
+  await request(app)
+    .post('/archery-contest-api/users')
+    .send({
+      name: 'A',
+      email: 'incorrect_Email',
+      password: '123',
+    })
+    .expect(400);
+});
+
 test('Should login existing user', async () => {
   const response = await request(app)
     .post('/archery-contest-api/users/login')
@@ -48,9 +58,7 @@ test('Should login existing user', async () => {
       password: userOne.password,
     })
     .expect(200);
-
   const user = await UserModel.findById(response.body.user._id);
-
   expect(response.body.token).toBe(user.tokens[user.tokens.length - 1].token);
 });
 
@@ -64,7 +72,7 @@ test('Should not login nonexistent user', async () => {
     .expect(400);
 });
 
-test('Should get user profile', async () => {
+test('Should fetch user profile', async () => {
   await request(app)
     .get(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
@@ -72,7 +80,7 @@ test('Should get user profile', async () => {
     .expect(200);
 });
 
-test('Should not get other user profile', async () => {
+test('Should not fetch other user profile', async () => {
   await request(app)
     .get(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
@@ -80,7 +88,7 @@ test('Should not get other user profile', async () => {
     .expect(404);
 });
 
-test('Should get other user profile being admin', async () => {
+test('Should if admin fetch other user profile', async () => {
   await request(app)
     .get(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
@@ -88,7 +96,43 @@ test('Should get other user profile being admin', async () => {
     .expect(200);
 });
 
-test('Should not get user profile being unauthenticated', async () => {
+test('Should if admin fetch other user profiles', async () => {
+  await request(app)
+    .get('/archery-contest-api/users')
+    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .send()
+    .expect(200);
+});
+
+test('Should if admin fetch blocked users', async () => {
+  const response = await request(app)
+    .get('/archery-contest-api/users?blocked=true')
+    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .send()
+    .expect(200);
+  const unblocked = response.body.items.some((user) => user.blocked === false);
+  expect(unblocked).toBe(false);
+});
+
+test('Should if admin fetch sorted users', async () => {
+  const response = await request(app)
+    .get('/archery-contest-api/users?sortBy=createdAt:desc')
+    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .send()
+    .expect(200);
+  expect(response.body.createdAt).toBe(userOne.createdAt);
+});
+
+test('Should if admin fetch limit/skip users', async () => {
+  const response = await request(app)
+    .get('/archery-contest-api/users?limit=1&skip=1')
+    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .send()
+    .expect(200);
+  expect(response.body.items[0].email).toBe(userTwo.email);
+});
+
+test('Should not fetch user profile being unauthenticated', async () => {
   await request(app)
     .get(`/archery-contest-api/users/${userOneId}`)
     .send()
@@ -103,7 +147,6 @@ test('Should update valid user fields', async () => {
       name: 'Changed User Name',
     })
     .expect(200);
-
   expect(response.body).toMatchObject({
     name: 'Changed User Name',
   });
@@ -119,6 +162,15 @@ test('Should not update invalid user fields', async () => {
     .expect(400);
 });
 
+test('Should not update user if unauthenticated', async () => {
+  await request(app)
+    .put(`/archery-contest-api/users/${userOneId}`)
+    .send({
+      name: 'Changed User Name',
+    })
+    .expect(401);
+});
+
 test('Should not update other user', async () => {
   await request(app)
     .put(`/archery-contest-api/users/${userOneId}`)
@@ -129,7 +181,19 @@ test('Should not update other user', async () => {
     .expect(404);
 });
 
-test('Should update other user being admin', async () => {
+test('Should not update user with invalid name/email/password', async () => {
+  await request(app)
+    .put(`/archery-contest-api/users/${userOneId}`)
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({
+      name: 'A',
+      email: 'incorrect_Email',
+      password: '123',
+    })
+    .expect(400);
+});
+
+test('Should if admin update other user', async () => {
   const response = await request(app)
     .put(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
@@ -137,7 +201,6 @@ test('Should update other user being admin', async () => {
       name: 'Changed User Name',
     })
     .expect(200);
-
   expect(response.body).toMatchObject({
     name: 'Changed User Name',
   });
@@ -149,10 +212,18 @@ test('Should delete user profile', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send()
     .expect(200);
-
   const user = await UserModel.findById(userOneId);
-
   expect(user).toBeNull();
+});
+
+test('Should not delete user if unauthenticated', async () => {
+  await request(app)
+    .delete(`/archery-contest-api/users/${userOneId}`)
+    .send()
+    .expect(401);
+  // TODO: Finish
+  // const user = await UserModel.findById(userOneId);
+  // expect(user).toBeNull();
 });
 
 test('Should not delete other user profile', async () => {
@@ -161,9 +232,7 @@ test('Should not delete other user profile', async () => {
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
     .send()
     .expect(404);
-
   const user = await UserModel.findById(userOneId);
-
   expect(user).not.toBeNull();
 });
 
@@ -174,15 +243,14 @@ test('Should not delete account for unauthenticated user', async () => {
     .expect(401);
 });
 
-test('Should delete other user profile being admin', async () => {
+test('Should if admin delete other user profile', async () => {
   await request(app)
     .delete(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
     .send()
     .expect(200);
-
+  // TODO: Finish
   // const user = await UserModel.findById(userOneId);
-  //
   // expect(user).toBeNull();
 });
 
@@ -192,8 +260,6 @@ test('Should upload avatar image', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .attach('avatar', 'tests/fixtures/avatar.png')
     .expect(200);
-
   const user = await UserModel.findById(userOneId);
-
   expect(user.avatar).toEqual(expect.any(Buffer));
 });
