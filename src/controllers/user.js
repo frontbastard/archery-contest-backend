@@ -62,12 +62,23 @@ const getAll = async (req, res) => {
     return res.status(402).send('Not allowed');
   }
 
+  const { searchTerm, pageIndex, pageSize, filter } = JSON.parse(
+    req.query.request
+  );
   const match = {};
   const sort = {};
-  const isBlocked = req.query.blocked;
+  const skip = pageIndex * pageSize;
+  const limit = pageSize;
 
-  if (isBlocked) {
-    match.blocked = isBlocked === 'true';
+  if (filter.blocked !== null) {
+    match.blocked = filter.blocked;
+  }
+
+  if (searchTerm !== null && searchTerm !== '') {
+    match.$or = [
+      { name: { $regex: searchTerm, $options: 'i' } },
+      { email: { $regex: searchTerm, $options: 'i' } },
+    ];
   }
 
   if (req.query.sortBy) {
@@ -79,9 +90,9 @@ const getAll = async (req, res) => {
   try {
     const users = await UserModel.find(match)
       .sort(sort)
-      .skip(parseInt(req.query.skip, 10))
-      .limit(parseInt(req.query.limit, 10));
-    const counter = await UserModel.count({});
+      .skip(skip)
+      .limit(limit);
+    const counter = await UserModel.count(match);
 
     return res.send({ totalCount: counter, items: users });
   } catch (error) {

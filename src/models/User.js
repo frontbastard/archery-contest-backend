@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
       },
       default: 0,
     },
-    blocked: { type: Boolean, default: false },
+    blocked: { type: Boolean || null, default: null },
     tokens: [
       {
         token: {
@@ -75,6 +75,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// userSchema.index({ name: 'text', description: 'text' });
 // userSchema.virtual('contests', {
 //   ref: MODEL.CONTEST,
 //   localField: '_id',
