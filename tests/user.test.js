@@ -98,7 +98,7 @@ test('Should if admin fetch other user profile', async () => {
 
 test('Should if admin fetch other user profiles', async () => {
   await request(app)
-    .get('/archery-contest-api/users')
+    .get('/archery-contest-api/users?request={}')
     .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
     .send()
     .expect(200);
@@ -106,7 +106,7 @@ test('Should if admin fetch other user profiles', async () => {
 
 test('Should if admin fetch blocked users', async () => {
   const response = await request(app)
-    .get('/archery-contest-api/users?blocked=true')
+    .get('/archery-contest-api/users?request={"filter":{"blocked":"true"}}')
     .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
     .send()
     .expect(200);
@@ -116,7 +116,9 @@ test('Should if admin fetch blocked users', async () => {
 
 test('Should if admin fetch sorted users', async () => {
   const response = await request(app)
-    .get('/archery-contest-api/users?sortBy=createdAt:desc')
+    .get(
+      '/archery-contest-api/users?request={"sortTerm":"createdAt","sortAsc":"asc"}'
+    )
     .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
     .send()
     .expect(200);
@@ -125,7 +127,7 @@ test('Should if admin fetch sorted users', async () => {
 
 test('Should if admin fetch limit/skip users', async () => {
   const response = await request(app)
-    .get('/archery-contest-api/users?limit=1&skip=1')
+    .get('/archery-contest-api/users?request={"pageIndex":1,"pageSize":1}')
     .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
     .send()
     .expect(200);

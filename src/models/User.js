@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
       },
       default: 0,
     },
-    blocked: { type: Boolean || null, default: null },
+    blocked: { type: Boolean || null, default: false },
     tokens: [
       {
         token: {

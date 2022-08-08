@@ -62,29 +62,26 @@ const getAll = async (req, res) => {
     return res.status(402).send('Not allowed');
   }
 
-  const { searchTerm, pageIndex, pageSize, filter } = JSON.parse(
-    req.query.request
-  );
+  const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
+    JSON.parse(req.query.request);
   const match = {};
   const sort = {};
   const skip = pageIndex * pageSize;
   const limit = pageSize;
 
-  if (filter.blocked !== null) {
+  if (filter && filter.blocked !== null) {
     match.blocked = filter.blocked;
   }
 
-  if (searchTerm !== null && searchTerm !== '') {
+  if (searchTerm) {
     match.$or = [
       { name: { $regex: searchTerm, $options: 'i' } },
       { email: { $regex: searchTerm, $options: 'i' } },
     ];
   }
 
-  if (req.query.sortBy) {
-    const [prop, value] = req.query.sortBy.split(':');
-
-    sort[prop] = value === 'desc' ? -1 : 1;
+  if (sortAsc) {
+    sort[sortTerm] = sortAsc === 'asc' ? 1 : -1;
   }
 
   try {
@@ -180,7 +177,7 @@ const remove = async (req, res) => {
 
     user.remove();
     sendCancelEmail(user.email, user.name);
-    return res.send(user);
+    return res.send(user._id);
   } catch (error) {
     return res.status(500).send();
   }
