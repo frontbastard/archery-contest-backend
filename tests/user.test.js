@@ -154,16 +154,6 @@ test('Should update valid user fields', async () => {
   });
 });
 
-test('Should not update invalid user fields', async () => {
-  await request(app)
-    .put(`/archery-contest-api/users/${userOneId}`)
-    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
-    .send({
-      nonexistentField: 'Dummy Value',
-    })
-    .expect(400);
-});
-
 test('Should not update user if unauthenticated', async () => {
   await request(app)
     .put(`/archery-contest-api/users/${userOneId}`)

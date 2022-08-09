@@ -1,12 +1,13 @@
 const sharp = require('sharp');
 const UserModel = require('../models/User');
 const {
+  isAdmin,
   isProfileOwner,
   canViewUser,
   canUpdateUser,
   canDeleteUser,
 } = require('../permissions/user');
-const { sendWelcomeEmail, sendCancelEmail } = require('../emails/account');
+const { sendCancelEmail } = require('../emails/account');
 
 const add = async (req, res) => {
   const user = new UserModel(req.body);
@@ -123,30 +124,29 @@ const get = async (req, res) => {
 
 const update = async (req, res) => {
   const _id = req.params.id;
-
   const updates = Object.keys(req.body);
   const allowedUpdates = ['name', 'email', 'password', 'age'];
-  const isValidOperation = updates.every(
-    (update) =>
-      allowedUpdates.includes(update) ||
-      (canUpdateUser(req.user) && update === 'blocked')
-  );
-
-  if (!isValidOperation) {
-    return res.status(400).send({ error: 'Invalid updates' });
-  }
 
   try {
-    const user = !canUpdateUser(req.user)
-      ? await req.user
+    const user = !isAdmin(req.user)
+      ? req.user
       : await UserModel.findOne({ _id });
 
-    if (!user || (!isProfileOwner(req.user, _id) && !canUpdateUser(req.user))) {
+    if (!user || (!isProfileOwner(user, _id) && !isAdmin(user))) {
       return res.status(404).send();
     }
 
+    if (isAdmin(req.user) && !isAdmin(user)) {
+      allowedUpdates.push('blocked', 'role');
+    }
+
     updates.forEach((update) => {
-      user[update] = req.body[update];
+      const isValidOperation = allowedUpdates.includes(update);
+      const isFieldChanged = user[update] !== req.body[update];
+
+      if (isFieldChanged && isValidOperation) {
+        user[update] = req.body[update];
+      }
     });
     await user.save();
 
@@ -160,11 +160,11 @@ const remove = async (req, res) => {
   const _id = req.params.id;
 
   try {
-    if (!isProfileOwner(req.user, _id) && !canDeleteUser(req.user)) {
+    if (!isProfileOwner(req.user, _id) && !isAdmin(req.user)) {
       return res.status(404).send();
     }
 
-    if (!canDeleteUser(req.user)) {
+    if (!isAdmin(req.user)) {
       await req.user.remove();
       return res.send(req.user);
     }
@@ -175,8 +175,12 @@ const remove = async (req, res) => {
       return res.status(404).send();
     }
 
+    if (isAdmin(user)) {
+      return res.status(400).send('Admin can not be deleted');
+    }
+
     user.remove();
-    sendCancelEmail(user.email, user.name);
+    // sendCancelEmail(user.email, user.name);
     return res.send(user._id);
   } catch (error) {
     return res.status(500).send();
