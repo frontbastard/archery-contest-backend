@@ -94,6 +94,7 @@ const setupDatabase = async () => {
 module.exports = {
   userOneId,
   userTwoId,
+  userAdminId,
   userOne,
   userTwo,
   userBlocked,

@@ -3,6 +3,7 @@ const app = require('../src/app');
 const UserModel = require('../src/models/User');
 const {
   userOneId,
+  userAdminId,
   userOne,
   userTwo,
   userAdmin,
@@ -154,6 +155,20 @@ test('Should update valid user fields', async () => {
   });
 });
 
+test('Should not update "role" and "blocked" fields', async () => {
+  const response = await request(app)
+    .put(`/archery-contest-api/users/${userOneId}`)
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send({
+      blocked: true,
+      role: 'admin',
+    });
+  expect(response.body).toMatchObject({
+    blocked: false,
+    role: 'user',
+  });
+});
+
 test('Should not update user if unauthenticated', async () => {
   await request(app)
     .put(`/archery-contest-api/users/${userOneId}`)
@@ -208,6 +223,14 @@ test('Should delete user profile', async () => {
   expect(user).toBeNull();
 });
 
+test('Should not delete not existence profile', async () => {
+  await request(app)
+    .delete(`/archery-contest-api/users/62f13d44779b74210f02d448`)
+    .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
+    .send()
+    .expect(404);
+});
+
 test('Should not delete user if unauthenticated', async () => {
   await request(app)
     .delete(`/archery-contest-api/users/${userOneId}`)
@@ -244,6 +267,17 @@ test('Should if admin delete other user profile', async () => {
   // TODO: Finish
   // const user = await UserModel.findById(userOneId);
   // expect(user).toBeNull();
+});
+
+test('Should if admin delete admin profile', async () => {
+  await request(app)
+    .delete(`/archery-contest-api/users/${userAdminId}`)
+    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .send()
+    .expect(400);
+
+  const user = await UserModel.findById(userAdminId);
+  expect(user).not.toBeNull();
 });
 
 test('Should upload avatar image', async () => {

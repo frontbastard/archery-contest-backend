@@ -159,11 +159,11 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
   const _id = req.params.id;
 
-  try {
-    if (!isProfileOwner(req.user, _id) && !isAdmin(req.user)) {
-      return res.status(404).send();
-    }
+  if (!isProfileOwner(req.user, _id) && !isAdmin(req.user)) {
+    return res.status(404).send();
+  }
 
+  try {
     if (!isAdmin(req.user)) {
       await req.user.remove();
       return res.send(req.user);
@@ -188,11 +188,10 @@ const remove = async (req, res) => {
 };
 
 const uploadAvatar = async (req, res) => {
-  const buffer = await sharp(req.file.buffer)
+  req.user.avatar = await sharp(req.file.buffer)
     .resize({ width: 250, height: 250 })
     .png()
     .toBuffer();
-  req.user.avatar = buffer;
 
   await req.user.save();
   res.send();
