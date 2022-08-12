@@ -1,15 +1,16 @@
 const { ROLE } = require('../common/constants');
 
-const isAdmin = (user) => user.role === ROLE.ADMIN;
 const isProfileOwner = (user, id) => user._id.toString() === id;
-const canViewUser = (user) => user.role === ROLE.ADMIN;
-const canUpdateUser = (user) => user.role === ROLE.ADMIN;
-const canDeleteUser = (user) => user.role === ROLE.ADMIN;
+const isMaster = (user) => user.role === ROLE.MASTER;
+const isAdmin = (user) => user.role === ROLE.ADMIN;
+const canViewAll = (user) => isMaster(user) || isAdmin(user);
+const canUpdateUser = (user) => isMaster(user) || isAdmin(user);
+const canDeleteUser = (user) => isMaster(user) || isAdmin(user);
 
 module.exports = {
-  isAdmin,
+  isMaster,
   isProfileOwner,
-  canViewUser,
+  canViewAll,
   canUpdateUser,
   canDeleteUser,
 };

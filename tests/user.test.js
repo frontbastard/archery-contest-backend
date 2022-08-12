@@ -3,10 +3,10 @@ const app = require('../src/app');
 const UserModel = require('../src/models/User');
 const {
   userOneId,
-  userAdminId,
+  userMasterId,
   userOne,
   userTwo,
-  userAdmin,
+  userMaster,
   setupDatabase,
 } = require('./fixtures/db');
 
@@ -89,47 +89,47 @@ test('Should not fetch other user profile', async () => {
     .expect(404);
 });
 
-test('Should if admin fetch other user profile', async () => {
+test('Should if master fetch other user profile', async () => {
   await request(app)
     .get(`/archery-contest-api/users/${userOneId}`)
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
 });
 
-test('Should if admin fetch other user profiles', async () => {
+test('Should if master fetch other user profiles', async () => {
   await request(app)
     .get('/archery-contest-api/users?request={}')
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
 });
 
-test('Should if admin fetch blocked users', async () => {
+test('Should if master fetch blocked users', async () => {
   const response = await request(app)
     .get('/archery-contest-api/users?request={"filter":{"blocked":"true"}}')
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
   const unblocked = response.body.items.some((user) => user.blocked === false);
   expect(unblocked).toBe(false);
 });
 
-test('Should if admin fetch sorted users', async () => {
+test('Should if master fetch sorted users', async () => {
   const response = await request(app)
     .get(
       '/archery-contest-api/users?request={"sortTerm":"createdAt","sortAsc":"asc"}'
     )
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
   expect(response.body.createdAt).toBe(userOne.createdAt);
 });
 
-test('Should if admin fetch limit/skip users', async () => {
+test('Should if master fetch limit/skip users', async () => {
   const response = await request(app)
     .get('/archery-contest-api/users?request={"pageIndex":1,"pageSize":1}')
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
   expect(response.body.items[0].email).toBe(userTwo.email);
@@ -161,7 +161,7 @@ test('Should not update "role" and "blocked" fields', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({
       blocked: true,
-      role: 'admin',
+      role: 'master',
     })
     .expect(400);
 });
@@ -197,10 +197,10 @@ test('Should not update user with invalid name/email/password', async () => {
     .expect(400);
 });
 
-test('Should if admin update other user', async () => {
+test('Should if master update other user', async () => {
   const response = await request(app)
     .put(`/archery-contest-api/users/${userOneId}`)
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send({
       name: 'Changed User Name',
     })
@@ -255,10 +255,10 @@ test('Should not delete account for unauthenticated user', async () => {
     .expect(401);
 });
 
-test('Should if admin delete other user profile', async () => {
+test('Should if master delete other user profile', async () => {
   await request(app)
     .delete(`/archery-contest-api/users/${userOneId}`)
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
   // TODO: Finish
@@ -266,14 +266,14 @@ test('Should if admin delete other user profile', async () => {
   // expect(user).toBeNull();
 });
 
-test('Should if admin delete admin profile', async () => {
+test('Should if master can not delete master profile', async () => {
   await request(app)
-    .delete(`/archery-contest-api/users/${userAdminId}`)
-    .set('Authorization', `Bearer ${userAdmin.tokens[0].token}`)
+    .delete(`/archery-contest-api/users/${userMasterId}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(400);
 
-  const user = await UserModel.findById(userAdminId);
+  const user = await UserModel.findById(userMasterId);
   expect(user).not.toBeNull();
 });
 

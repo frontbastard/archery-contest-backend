@@ -9,7 +9,7 @@ const {
   logout,
   logoutAll,
   getAll,
-  get,
+  getByID,
   update,
   remove,
   uploadAvatar,
@@ -36,7 +36,7 @@ router.post('/login', login);
 router.post('/logout', authUser, logout);
 router.post('/logout-all', authUser, logoutAll);
 router.get('/', authUser, getAll);
-router.get('/:id', authUser, get);
+router.get('/:id', authUser, getByID);
 router.put('/:id', authUser, update);
 router.delete('/:id', authUser, remove);
 router.post(

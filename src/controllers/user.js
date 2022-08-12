@@ -1,9 +1,9 @@
 const sharp = require('sharp');
 const UserModel = require('../models/User');
 const {
-  isAdmin,
+  isMaster,
   isProfileOwner,
-  canViewUser,
+  canViewAll,
   canUpdateUser,
   canDeleteUser,
 } = require('../permissions/user');
@@ -59,13 +59,13 @@ const logoutAll = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
-  if (!canViewUser(req.user)) {
+  if (!canViewAll(req.user)) {
     return res.status(402).send('Not allowed');
   }
 
   const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
     JSON.parse(req.query.request);
-  const match = {};
+  const match = { _id: { $ne: req.user._id }, role: { $ne: 'master' } };
   const sort = {};
   const skip = pageIndex * pageSize;
   const limit = pageSize;
@@ -98,14 +98,14 @@ const getAll = async (req, res) => {
   }
 };
 
-const get = async (req, res) => {
+const getByID = async (req, res) => {
   const _id = req.params.id;
 
   if (isProfileOwner(req.user, _id)) {
     return res.send(req.user);
   }
 
-  if (!canViewUser(req.user)) {
+  if (!canViewAll(req.user)) {
     return res.status(404).send();
   }
 
@@ -128,20 +128,20 @@ const update = async (req, res) => {
   const allowedUpdates = ['name', 'email', 'password', 'age'];
 
   try {
-    const user = !isAdmin(req.user)
+    const user = !isMaster(req.user)
       ? req.user
       : await UserModel.findOne({ _id });
 
-    if (!user || (!isProfileOwner(user, _id) && !isAdmin(user))) {
+    if (!user || (!isProfileOwner(user, _id) && !isMaster(user))) {
       return res.status(404).send();
     }
 
-    if (isAdmin(req.user) && !isAdmin(user)) {
+    if (isMaster(req.user) && !isMaster(user)) {
       allowedUpdates.push('blocked', 'role');
     }
 
     if (updates.includes('blocked' || updates.includes('role'))) {
-      if (isAdmin(user) || !isAdmin(req.user)) {
+      if (isMaster(user) || !isMaster(req.user)) {
         return res
           .status(400)
           .send('Fields "blocked" and "role" can not be changed');
@@ -167,12 +167,12 @@ const update = async (req, res) => {
 const remove = async (req, res) => {
   const _id = req.params.id;
 
-  if (!isProfileOwner(req.user, _id) && !isAdmin(req.user)) {
+  if (!isProfileOwner(req.user, _id) && !isMaster(req.user)) {
     return res.status(404).send();
   }
 
   try {
-    if (!isAdmin(req.user)) {
+    if (!isMaster(req.user)) {
       await req.user.remove();
       return res.send(req.user);
     }
@@ -183,8 +183,8 @@ const remove = async (req, res) => {
       return res.status(404).send();
     }
 
-    if (isAdmin(user)) {
-      return res.status(400).send('Admin can not be deleted');
+    if (isMaster(user)) {
+      return res.status(400).send('Master can not be deleted');
     }
 
     user.remove();
@@ -232,7 +232,7 @@ module.exports = {
   logout,
   logoutAll,
   getAll,
-  get,
+  getByID,
   update,
   remove,
   uploadAvatar,

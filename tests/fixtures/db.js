@@ -43,16 +43,16 @@ const userBlocked = {
   ],
 };
 
-const userAdminId = new mongoose.Types.ObjectId();
-const userAdmin = {
-  _id: userAdminId,
-  name: 'Test User Admin',
-  email: 'testuseradmin@email.com',
+const userMasterId = new mongoose.Types.ObjectId();
+const userMaster = {
+  _id: userMasterId,
+  name: 'Test User Master',
+  email: 'testusermaster@email.com',
   password: 'Red12345!',
-  role: 'admin',
+  role: 'master',
   tokens: [
     {
-      token: jwt.sign({ _id: userAdminId }, process.env.JWT_SECRET),
+      token: jwt.sign({ _id: userMasterId }, process.env.JWT_SECRET),
     },
   ],
 };
@@ -85,7 +85,7 @@ const setupDatabase = async () => {
   await new UserModel(userOne).save();
   await new UserModel(userTwo).save();
   await new UserModel(userBlocked).save();
-  await new UserModel(userAdmin).save();
+  await new UserModel(userMaster).save();
   await new ContestModel(contestUserOne).save();
   await new ContestModel(contestUserTwo).save();
   await new ContestModel(contestUserBlocked).save();
@@ -94,11 +94,11 @@ const setupDatabase = async () => {
 module.exports = {
   userOneId,
   userTwoId,
-  userAdminId,
+  userMasterId,
   userOne,
   userTwo,
   userBlocked,
-  userAdmin,
+  userMaster,
   contestUserOne,
   contestUserTwo,
   contestUserBlocked,
