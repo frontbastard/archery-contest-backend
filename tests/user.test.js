@@ -156,17 +156,14 @@ test('Should update valid user fields', async () => {
 });
 
 test('Should not update "role" and "blocked" fields', async () => {
-  const response = await request(app)
+  await request(app)
     .put(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send({
       blocked: true,
       role: 'admin',
-    });
-  expect(response.body).toMatchObject({
-    blocked: false,
-    role: 'user',
-  });
+    })
+    .expect(400);
 });
 
 test('Should not update user if unauthenticated', async () => {

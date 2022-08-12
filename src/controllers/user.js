@@ -140,6 +140,14 @@ const update = async (req, res) => {
       allowedUpdates.push('blocked', 'role');
     }
 
+    if (updates.includes('blocked' || updates.includes('role'))) {
+      if (isAdmin(user) || !isAdmin(req.user)) {
+        return res
+          .status(400)
+          .send('Fields "blocked" and "role" can not be changed');
+      }
+    }
+
     updates.forEach((update) => {
       const isValidOperation = allowedUpdates.includes(update);
       const isFieldChanged = user[update] !== req.body[update];
