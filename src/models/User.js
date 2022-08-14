@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 2,
+      maxlength: 30,
       trim: true,
     },
     email: {
@@ -19,6 +20,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       required: true,
       minlength: 2,
+      maxlength: 30,
       trim: true,
       lowercase: true,
       validate(value) {
@@ -34,6 +36,7 @@ const userSchema = new mongoose.Schema(
         if (
           !validator.isStrongPassword(value, {
             minLength: 8,
+            maxlength: 30,
             minLowercase: 1,
             minUppercase: 1,
             minNumbers: 1,
@@ -43,14 +46,10 @@ const userSchema = new mongoose.Schema(
         }
       },
     },
-    age: {
-      type: Number,
-      validate(value) {
-        if (value < 0) {
-          throw new Error('Age must be a positive number');
-        }
-      },
-      default: 0,
+    dateOfBirth: {
+      type: Date || null,
+      trim: true,
+      default: null,
     },
     blocked: { type: Boolean || null, default: false },
     tokens: [

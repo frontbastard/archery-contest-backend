@@ -125,7 +125,7 @@ const getByID = async (req, res) => {
 const update = async (req, res) => {
   const _id = req.params.id;
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['name', 'email', 'password', 'age'];
+  const allowedUpdates = ['name', 'email', 'password', 'dateOfBirth'];
 
   try {
     const user = !isMaster(req.user)
