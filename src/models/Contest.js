@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
+
+const { Schema } = mongoose;
 const { MODEL } = require('../common/constants');
 // const validator = require('validator');
 
-const contestSchema = new mongoose.Schema(
+const contestSchema = new Schema(
   {
     name: {
       type: String,
@@ -13,7 +15,7 @@ const contestSchema = new mongoose.Schema(
     description: { type: String, trim: true, default: '' },
     hidden: { type: Boolean, default: false },
     owner: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       required: true,
       ref: MODEL.USER,
     },
