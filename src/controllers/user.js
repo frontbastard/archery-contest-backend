@@ -92,7 +92,10 @@ const getAll = async (req, res) => {
       .limit(limit);
     const counter = await UserModel.count(match);
 
-    return res.send({ totalCount: counter, items: users });
+    return res.send({
+      totalCount: counter,
+      items: users.length > 0 ? users : null,
+    });
   } catch (error) {
     return res.status(500).send();
   }
