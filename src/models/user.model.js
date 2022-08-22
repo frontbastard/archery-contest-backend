@@ -6,7 +6,10 @@ const bcrypt = require('bcryptjs');
 const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
 const { MODEL, ROLE } = require('../common/constants');
-const ContestModel = require('./Contest');
+// const {ContestModel} = require('./contest.model');
+
+const USER_FIELDS = ['name', 'email', 'password', 'dateOfBirth'];
+const MASTER_FIELDS = ['blocked', 'role'];
 
 const userSchema = new Schema(
   {
@@ -139,14 +142,14 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Delete user contests when user is removed
-userSchema.pre('remove', async function (next) {
-  const user = this;
-  await ContestModel.deleteMany({ owner: user._id });
-
-  next();
-});
+// // Delete user contests when user is removed
+// userSchema.pre('remove', async function (next) {
+//   const user = this;
+//   await ContestModel.deleteMany({ owner: user._id });
+//
+//   next();
+// });
 
 const UserModel = mongoose.model(MODEL.USER, userSchema);
 
-module.exports = UserModel;
+module.exports = { UserModel, USER_FIELDS, MASTER_FIELDS };

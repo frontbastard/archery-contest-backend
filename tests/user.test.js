@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
-const UserModel = require('../src/models/User');
+const { UserModel } = require('../src/models/user.model');
 const {
   userOneId,
   userMasterId,
@@ -21,16 +21,15 @@ test('Should signup a new user', async () => {
       password: 'Red12345!',
     })
     .expect(201);
-
   // Assert that the database was changed correctly
-  const user = await UserModel.findById(response.body.user._id);
+  const user = await UserModel.findById(response.body.data.user._id);
   expect(user).not.toBeNull();
 
   // Assertions about the response (only for one property)
-  // expect(response.body.user.name).toBe('Test User'); // Only for one property
+  // expect(response.body.data.user.name).toBe('Test User'); // Only for one property
 
   // Assertions about the response (for the whole object)
-  expect(response.body).toMatchObject({
+  expect(response.body.data).toMatchObject({
     user: {
       name: 'Test User',
       email: 'testuser@email.com',
@@ -38,6 +37,19 @@ test('Should signup a new user', async () => {
     token: user.tokens[0].token,
   });
   expect(user.password).not.toBe('Red12345!');
+});
+
+test('Should not signup a user with not allowed fields', async () => {
+  await request(app)
+    .post('/archery-contest-api/users')
+    .send({
+      name: 'Test User',
+      email: 'testuser@email.com',
+      password: 'Red12345!',
+      blocked: true,
+      role: 'admin',
+    })
+    .expect(400);
 });
 
 test('Should not signup user with invalid name/email/password', async () => {
@@ -59,8 +71,10 @@ test('Should login existing user', async () => {
       password: userOne.password,
     })
     .expect(200);
-  const user = await UserModel.findById(response.body.user._id);
-  expect(response.body.token).toBe(user.tokens[user.tokens.length - 1].token);
+  const user = await UserModel.findById(response.body.data.user._id);
+  expect(response.body.data.token).toBe(
+    user.tokens[user.tokens.length - 1].token
+  );
 });
 
 test('Should not login nonexistent user', async () => {
@@ -111,7 +125,9 @@ test('Should if master fetch blocked users', async () => {
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
-  const unblocked = response.body.items.some((user) => user.blocked === false);
+  const unblocked = response.body.data.items.some(
+    (user) => user.blocked === false
+  );
   expect(unblocked).toBe(false);
 });
 
@@ -123,7 +139,7 @@ test('Should if master fetch sorted users', async () => {
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
-  expect(response.body.createdAt).toBe(userOne.createdAt);
+  expect(response.body.data.createdAt).toBe(userOne.createdAt);
 });
 
 test('Should if master fetch limit/skip users', async () => {
@@ -132,7 +148,7 @@ test('Should if master fetch limit/skip users', async () => {
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
-  expect(response.body.items[0].email).toBe(userTwo.email);
+  expect(response.body.data.items[0].email).toBe(userTwo.email);
 });
 
 test('Should not fetch user profile being unauthenticated', async () => {
@@ -150,7 +166,7 @@ test('Should update valid user fields', async () => {
       name: 'Changed User Name',
     })
     .expect(200);
-  expect(response.body).toMatchObject({
+  expect(response.body.data).toMatchObject({
     name: 'Changed User Name',
   });
 });
@@ -205,7 +221,7 @@ test('Should if master update other user', async () => {
       name: 'Changed User Name',
     })
     .expect(200);
-  expect(response.body).toMatchObject({
+  expect(response.body.data).toMatchObject({
     name: 'Changed User Name',
   });
 });

@@ -4,6 +4,8 @@ const { Schema } = mongoose;
 const { MODEL } = require('../common/constants');
 // const validator = require('validator');
 
+const CONTEST_FIELDS = ['name', 'description', 'hidden'];
+
 const contestSchema = new Schema(
   {
     name: {
@@ -27,4 +29,4 @@ const contestSchema = new Schema(
 
 const ContestModel = mongoose.model(MODEL.CONTEST, contestSchema);
 
-module.exports = ContestModel;
+module.exports = { ContestModel, CONTEST_FIELDS };

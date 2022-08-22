@@ -1,4 +1,8 @@
-const ContestModel = require('../models/Contest');
+const { ContestModel, CONTEST_FIELDS } = require('../models/contest.model');
+const {
+  sendSuccessResponse,
+  sendErrorResponse,
+} = require('../utils/sendResponse');
 const {
   canViewContest,
   canUpdateContest,
@@ -11,9 +15,9 @@ const add = async (req, res) => {
   await contest.save();
 
   try {
-    res.status(201).send(contest);
+    sendSuccessResponse(res, 201, contest);
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, 400);
   }
 };
 
@@ -45,9 +49,9 @@ const getAll = async (req, res) => {
       .skip(parseInt(req.query.skip, 10))
       .limit(parseInt(req.query.limit, 10));
 
-    res.send(contests);
+    sendSuccessResponse(res, 200, contests);
   } catch (error) {
-    res.status(500).send();
+    sendErrorResponse(res, 500, error);
   }
 };
 
@@ -63,12 +67,13 @@ const get = async (req, res) => {
     const contest = await ContestModel.findOne(match);
 
     if (!contest) {
-      res.status(404).send('Contest not found');
+      sendErrorResponse(res, 404);
+      return;
     }
 
-    res.send(contest);
+    sendSuccessResponse(res, 200, contest);
   } catch (error) {
-    res.status(500).send();
+    sendErrorResponse(res, 500, error);
   }
 };
 
@@ -76,17 +81,18 @@ const update = async (req, res) => {
   const _id = req.params.id;
   const match = { _id };
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['name', 'description', 'hidden'];
   const isValidOperation = updates.every((update) =>
-    allowedUpdates.includes(update)
+    CONTEST_FIELDS.includes(update)
   );
 
   if (req.user.blocked) {
-    return res.status(402).send({ error: 'You are blocked' });
+    sendErrorResponse(res, 402, 'Blocked');
+    return;
   }
 
   if (!isValidOperation) {
-    return res.status(400).send({ error: 'Invalid updates' });
+    sendErrorResponse(res, 400, 'Invalid updates');
+    return;
   }
 
   if (!canUpdateContest(req.user)) {
@@ -97,16 +103,17 @@ const update = async (req, res) => {
     const contest = await ContestModel.findOne(match);
 
     if (!contest) {
-      return res.status(404).send();
+      sendErrorResponse(res, 404);
+      return;
     }
 
     updates.forEach((update) => {
       contest[update] = req.body[update];
     });
     await contest.save();
-    return res.status(201).send(contest);
+    sendSuccessResponse(res, 201, contest);
   } catch (error) {
-    return res.status(400).send(error);
+    sendErrorResponse(res, 400);
   }
 };
 
@@ -115,7 +122,8 @@ const remove = async (req, res) => {
   const match = { _id };
 
   if (req.user.blocked) {
-    return res.status(402).send({ error: 'You are blocked' });
+    sendErrorResponse(res, 402, 'Blocked');
+    return;
   }
 
   if (!canDeleteContest(req.user)) {
@@ -126,12 +134,13 @@ const remove = async (req, res) => {
     const contest = await ContestModel.findOneAndDelete(match);
 
     if (!contest) {
-      return res.status(404).send();
+      sendErrorResponse(res, 404);
+      return;
     }
 
-    return res.send(contest);
+    sendSuccessResponse(res, 200, contest);
   } catch (error) {
-    return res.status(500).send(error);
+    sendErrorResponse(res, 500, error);
   }
 };
 

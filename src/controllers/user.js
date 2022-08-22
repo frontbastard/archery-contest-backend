@@ -1,24 +1,33 @@
 const sharp = require('sharp');
-const UserModel = require('../models/User');
+const { isMatch } = require('../utils/match');
 const {
-  isMaster,
-  isProfileOwner,
-  canViewAll,
-  canUpdateUser,
-  canDeleteUser,
-} = require('../permissions/user');
-const { sendCancelEmail } = require('../emails/account');
+  sendSuccessResponse,
+  sendErrorResponse,
+} = require('../utils/sendResponse');
+const {
+  UserModel,
+  USER_FIELDS,
+  MASTER_FIELDS,
+} = require('../models/user.model');
+const { isMaster, isProfileOwner, canViewAll } = require('../permissions/user');
+// const { sendCancelEmail } = require('../emails/account');
 
 const add = async (req, res) => {
-  const user = new UserModel(req.body);
+  const updates = Object.keys(req.body);
+
+  if (isMatch(updates, MASTER_FIELDS)) {
+    sendErrorResponse(res, 400, 'Invalid updates');
+    return;
+  }
 
   try {
+    const user = new UserModel(req.body);
     await user.save();
     // sendWelcomeEmail(user.email, user.name);
     const token = await user.generateAuthToken();
-    res.status(201).send({ user, token });
+    sendSuccessResponse(res, 201, { user, token });
   } catch (error) {
-    res.status(400).send(error);
+    sendErrorResponse(res, 400, error);
   }
 };
 
@@ -28,9 +37,9 @@ const login = async (req, res) => {
   try {
     const user = await UserModel.findByCredentials(email, password);
     const token = await user.generateAuthToken();
-    res.send({ user, token });
+    sendSuccessResponse(res, 200, { user, token });
   } catch (error) {
-    res.status(400).send();
+    sendErrorResponse(res, 400, error);
   }
 };
 
@@ -41,9 +50,9 @@ const logout = async (req, res) => {
     );
     await req.user.save();
 
-    res.send();
+    sendSuccessResponse(res, 200);
   } catch (error) {
-    res.status(500).send();
+    sendErrorResponse(res, 500, error);
   }
 };
 
@@ -52,15 +61,16 @@ const logoutAll = async (req, res) => {
     req.user.tokens = [];
     await req.user.save();
 
-    res.send();
+    sendSuccessResponse(res, 200);
   } catch (error) {
-    res.status(500).send();
+    sendErrorResponse(res, 500, error);
   }
 };
 
 const getAll = async (req, res) => {
   if (!canViewAll(req.user)) {
-    return res.status(402).send('Not allowed');
+    sendErrorResponse(res, 502, 'Not allowed');
+    return;
   }
 
   const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
@@ -92,12 +102,12 @@ const getAll = async (req, res) => {
       .limit(limit);
     const counter = await UserModel.count(match);
 
-    return res.send({
+    sendSuccessResponse(res, 200, {
       totalCount: counter,
       items: users.length > 0 ? users : null,
     });
   } catch (error) {
-    return res.status(500).send();
+    sendErrorResponse(res, 500, error);
   }
 };
 
@@ -105,65 +115,71 @@ const getByID = async (req, res) => {
   const _id = req.params.id;
 
   if (isProfileOwner(req.user, _id)) {
-    return res.send(req.user);
+    sendSuccessResponse(res, 200, req.user);
+    return;
   }
 
   if (!canViewAll(req.user)) {
-    return res.status(404).send();
+    sendErrorResponse(res, 404);
+    return;
   }
 
   try {
     const user = await UserModel.findById(_id);
 
     if (!user) {
-      return res.status(404).send();
+      sendErrorResponse(res, 404);
+      return;
     }
 
-    return res.send(user);
+    sendSuccessResponse(res, 200, user);
   } catch (error) {
-    return res.status(500).send();
+    sendErrorResponse(res, 500, error);
   }
 };
 
 const update = async (req, res) => {
   const _id = req.params.id;
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['name', 'email', 'password', 'dateOfBirth'];
+  const allowedFields = [...USER_FIELDS];
 
   try {
-    const user = !isMaster(req.user)
+    const updatingUser = !isMaster(req.user)
       ? req.user
       : await UserModel.findOne({ _id });
 
-    if (!user || (!isProfileOwner(user, _id) && !isMaster(user))) {
-      return res.status(404).send();
+    if (
+      !updatingUser ||
+      (!isProfileOwner(updatingUser, _id) && !isMaster(updatingUser))
+    ) {
+      sendErrorResponse(res, 404);
+      return;
     }
 
-    if (isMaster(req.user) && !isMaster(user)) {
-      allowedUpdates.push('blocked', 'role');
+    if (isMaster(req.user) && !isMaster(updatingUser)) {
+      allowedFields.push(...MASTER_FIELDS);
     }
 
-    if (updates.includes('blocked' || updates.includes('role'))) {
-      if (isMaster(user) || !isMaster(req.user)) {
-        return res
-          .status(400)
-          .send('Fields "blocked" and "role" can not be changed');
+    if (isMatch(updates, MASTER_FIELDS)) {
+      if (isMaster(updatingUser) || !isMaster(req.user)) {
+        sendErrorResponse(res, 400);
+        return;
       }
     }
 
     updates.forEach((update) => {
-      const isValidOperation = allowedUpdates.includes(update);
-      const isFieldChanged = user[update] !== req.body[update];
+      const isValidOperation = isMatch(USER_FIELDS, [update]);
+      const isFieldChanged = updatingUser[update] !== req.body[update];
 
       if (isFieldChanged && isValidOperation) {
-        user[update] = req.body[update];
+        updatingUser[update] = req.body[update];
       }
     });
-    await user.save();
+    await updatingUser.save();
 
-    return res.send(user);
+    sendSuccessResponse(res, 200, updatingUser);
   } catch (error) {
-    return res.status(400).send(error);
+    sendErrorResponse(res, 400);
   }
 };
 
@@ -171,30 +187,34 @@ const remove = async (req, res) => {
   const _id = req.params.id;
 
   if (!isProfileOwner(req.user, _id) && !isMaster(req.user)) {
-    return res.status(404).send();
+    sendErrorResponse(res, 404);
+    return;
   }
 
   try {
     if (!isMaster(req.user)) {
       await req.user.remove();
-      return res.send(req.user);
+      sendSuccessResponse(res, 200, req.user);
+      return;
     }
 
     const user = await UserModel.findOne({ _id });
 
     if (!user) {
-      return res.status(404).send();
+      sendErrorResponse(res, 404);
+      return;
     }
 
     if (isMaster(user)) {
-      return res.status(400).send('Master can not be deleted');
+      sendErrorResponse(res, 400);
+      return;
     }
 
     user.remove();
     // sendCancelEmail(user.email, user.name);
-    return res.send(user._id);
+    sendSuccessResponse(res, 200, user._id);
   } catch (error) {
-    return res.status(500).send();
+    sendErrorResponse(res, 500);
   }
 };
 
@@ -205,7 +225,7 @@ const uploadAvatar = async (req, res) => {
     .toBuffer();
 
   await req.user.save();
-  res.send();
+  sendSuccessResponse(res, 200);
 };
 
 const getAvatar = async (req, res) => {
@@ -217,16 +237,16 @@ const getAvatar = async (req, res) => {
     }
 
     res.set('Content-Type', 'image/png');
-    res.send(user.avatar);
+    sendSuccessResponse(res, 200, user.avatar);
   } catch (error) {
-    res.status(404).send();
+    sendErrorResponse(res, 404);
   }
 };
 
 const removeAvatar = async (req, res) => {
   req.user.avatar = undefined;
   await req.user.save();
-  res.send();
+  sendSuccessResponse(res, 200);
 };
 
 module.exports = {

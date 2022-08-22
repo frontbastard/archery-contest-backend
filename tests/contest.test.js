@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
-const ContestModel = require('../src/models/Contest');
+const { ContestModel } = require('../src/models/contest.model');
 const {
   userOne,
   userTwo,
@@ -24,7 +24,7 @@ test('Should create contest for user', async () => {
       description: 'Test contest description',
     })
     .expect(201);
-  const contest = await ContestModel.findById(response.body._id);
+  const contest = await ContestModel.findById(response.body.data._id);
   expect(contest).not.toBeNull();
   expect(contest.hidden).toBe(false);
 });
@@ -35,7 +35,7 @@ test('Should fetch user contests', async () => {
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
     .send()
     .expect(200);
-  expect(response.body).toHaveLength(1);
+  expect(response.body.data).toHaveLength(1);
 });
 
 test('Should fetch user contest', async () => {
@@ -68,7 +68,9 @@ test('Should if master fetch hidden contests', async () => {
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
-  const visible = response.body.some((contest) => contest.hidden === false);
+  const visible = response.body.data.some(
+    (contest) => contest.hidden === false
+  );
   expect(visible).toBe(false);
 });
 
@@ -78,7 +80,7 @@ test('Should if master fetch sorted contests', async () => {
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
-  expect(response.body.createdAt).toBe(contestUserOne.createdAt);
+  expect(response.body.data.createdAt).toBe(contestUserOne.createdAt);
 });
 
 test('Should if master fetch limit/skip contests', async () => {
@@ -87,7 +89,7 @@ test('Should if master fetch limit/skip contests', async () => {
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send()
     .expect(200);
-  expect(response.body[0]).toMatchObject(contestUserTwo);
+  expect(response.body.data[0]).toMatchObject(contestUserTwo);
 });
 
 test('Should if master fetch other user contest', async () => {
@@ -106,7 +108,7 @@ test('Should update valid contest fields', async () => {
       description: 'Updated Description',
     })
     .expect(201);
-  const contest = await ContestModel.findById(response.body._id);
+  const contest = await ContestModel.findById(response.body.data._id);
   expect(contest.description).toBe('Updated Description');
 });
 
