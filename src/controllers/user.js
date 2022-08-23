@@ -1,33 +1,33 @@
-const sharp = require('sharp');
-const { isMatch } = require('../utils/match');
+// const sharp = require('sharp');
 const {
   sendSuccessResponse,
   sendErrorResponse,
 } = require('../utils/sendResponse');
+const UserModel = require('../models/user.model');
+const { ERROR_CODE, ROLE } = require('../common/constants');
 const {
-  UserModel,
-  USER_FIELDS,
-  MASTER_FIELDS,
-} = require('../models/user.model');
-const { isMaster, isProfileOwner, canViewAll } = require('../permissions/user');
+  isMaster,
+  isProfileOwner,
+  canViewAll,
+  canUpdateUser,
+  canDeleteUser,
+} = require('../permissions/user');
 // const { sendCancelEmail } = require('../emails/account');
 
-const add = async (req, res) => {
-  const updates = Object.keys(req.body);
-
-  if (isMatch(updates, MASTER_FIELDS)) {
-    sendErrorResponse(res, 400, 'Invalid updates');
-    return;
-  }
-
+const signup = async (req, res) => {
   try {
-    const user = new UserModel(req.body);
-    await user.save();
+    const user = new UserModel({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+      dateOfBirth: req.body.dateOfBirth,
+    });
     // sendWelcomeEmail(user.email, user.name);
     const token = await user.generateAuthToken();
-    sendSuccessResponse(res, 201, { user, token });
+    await user.save();
+    sendSuccessResponse(res, { user, token });
   } catch (error) {
-    sendErrorResponse(res, 400, error);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
@@ -36,10 +36,16 @@ const login = async (req, res) => {
 
   try {
     const user = await UserModel.findByCredentials(email, password);
+
+    if (!user) {
+      sendErrorResponse(res, ERROR_CODE.userNotFound);
+      return;
+    }
+
     const token = await user.generateAuthToken();
-    sendSuccessResponse(res, 200, { user, token });
+    sendSuccessResponse(res, { user, token });
   } catch (error) {
-    sendErrorResponse(res, 400, error);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
@@ -50,9 +56,9 @@ const logout = async (req, res) => {
     );
     await req.user.save();
 
-    sendSuccessResponse(res, 200);
+    sendSuccessResponse(res);
   } catch (error) {
-    sendErrorResponse(res, 500, error);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
@@ -61,21 +67,22 @@ const logoutAll = async (req, res) => {
     req.user.tokens = [];
     await req.user.save();
 
-    sendSuccessResponse(res, 200);
+    sendSuccessResponse(res);
   } catch (error) {
-    sendErrorResponse(res, 500, error);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
 const getAll = async (req, res) => {
+  console.log(req.user.name, isMaster(req.user));
   if (!canViewAll(req.user)) {
-    sendErrorResponse(res, 502, 'Not allowed');
+    sendErrorResponse(res, ERROR_CODE.permissionDenied, 'Permission denied');
     return;
   }
 
   const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
     JSON.parse(req.query.request);
-  const match = { _id: { $ne: req.user._id }, role: { $ne: 'master' } };
+  const match = { _id: { $ne: req.user._id }, role: { $ne: ROLE.master } };
   const sort = {};
   const skip = pageIndex * pageSize;
   const limit = pageSize;
@@ -102,155 +109,135 @@ const getAll = async (req, res) => {
       .limit(limit);
     const counter = await UserModel.count(match);
 
-    sendSuccessResponse(res, 200, {
+    sendSuccessResponse(res, {
       totalCount: counter,
       items: users.length > 0 ? users : null,
     });
   } catch (error) {
-    sendErrorResponse(res, 500, error);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
 const getByID = async (req, res) => {
-  const _id = req.params.id;
+  const paramUserId = req.params.id;
 
-  if (isProfileOwner(req.user, _id)) {
-    sendSuccessResponse(res, 200, req.user);
+  if (isProfileOwner(req.user, paramUserId)) {
+    sendSuccessResponse(res, req.user);
     return;
   }
 
   if (!canViewAll(req.user)) {
-    sendErrorResponse(res, 404);
+    sendErrorResponse(res, ERROR_CODE.userNotFound);
     return;
   }
 
   try {
-    const user = await UserModel.findById(_id);
+    const user = await UserModel.findById(paramUserId);
 
     if (!user) {
-      sendErrorResponse(res, 404);
+      sendErrorResponse(res, ERROR_CODE.userNotFound);
       return;
     }
 
-    sendSuccessResponse(res, 200, user);
+    sendSuccessResponse(res, user);
   } catch (error) {
-    sendErrorResponse(res, 500, error);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
 const update = async (req, res) => {
-  const _id = req.params.id;
-  const updates = Object.keys(req.body);
-  const allowedFields = [...USER_FIELDS];
+  const paramUserId = req.params.id;
+  const allowedFields = ['name', 'email', 'password', 'dateOfBirth'];
 
   try {
-    const updatingUser = !isMaster(req.user)
-      ? req.user
-      : await UserModel.findOne({ _id });
+    const updatingUser = await UserModel.findOne({ _id: paramUserId });
 
     if (
       !updatingUser ||
-      (!isProfileOwner(updatingUser, _id) && !isMaster(updatingUser))
+      (!isProfileOwner(req.user, paramUserId) && !canUpdateUser(req.user))
     ) {
-      sendErrorResponse(res, 404);
+      sendErrorResponse(res, ERROR_CODE.userNotFound, 'User not found');
       return;
     }
 
-    if (isMaster(req.user) && !isMaster(updatingUser)) {
-      allowedFields.push(...MASTER_FIELDS);
+    if (canUpdateUser(req.user)) {
+      allowedFields.push('blocked', 'role');
     }
 
-    if (isMatch(updates, MASTER_FIELDS)) {
-      if (isMaster(updatingUser) || !isMaster(req.user)) {
-        sendErrorResponse(res, 400);
-        return;
-      }
-    }
-
-    updates.forEach((update) => {
-      const isValidOperation = isMatch(USER_FIELDS, [update]);
-      const isFieldChanged = updatingUser[update] !== req.body[update];
-
-      if (isFieldChanged && isValidOperation) {
+    allowedFields.forEach((update) => {
+      if (req.body[update]) {
         updatingUser[update] = req.body[update];
       }
     });
     await updatingUser.save();
-
-    sendSuccessResponse(res, 200, updatingUser);
+    sendSuccessResponse(res, updatingUser);
   } catch (error) {
-    sendErrorResponse(res, 400);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
 const remove = async (req, res) => {
-  const _id = req.params.id;
+  const paramUserId = req.params.id;
 
-  if (!isProfileOwner(req.user, _id) && !isMaster(req.user)) {
-    sendErrorResponse(res, 404);
+  if (!isProfileOwner(req.user, paramUserId) && !canDeleteUser(req.user)) {
+    sendErrorResponse(res, ERROR_CODE.permissionDenied, 'Permission denied');
     return;
   }
 
   try {
-    if (!isMaster(req.user)) {
-      await req.user.remove();
-      sendSuccessResponse(res, 200, req.user);
-      return;
-    }
-
-    const user = await UserModel.findOne({ _id });
+    const user = await UserModel.findOne({ _id: paramUserId });
 
     if (!user) {
-      sendErrorResponse(res, 404);
+      sendErrorResponse(res, ERROR_CODE.userNotFound, 'User not found');
       return;
     }
 
     if (isMaster(user)) {
-      sendErrorResponse(res, 400);
+      sendErrorResponse(res, ERROR_CODE.permissionDenied, 'Permission denied');
       return;
     }
 
     user.remove();
     // sendCancelEmail(user.email, user.name);
-    sendSuccessResponse(res, 200, user._id);
+    sendSuccessResponse(res, user._id);
   } catch (error) {
-    sendErrorResponse(res, 500);
+    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
   }
 };
 
-const uploadAvatar = async (req, res) => {
-  req.user.avatar = await sharp(req.file.buffer)
-    .resize({ width: 250, height: 250 })
-    .png()
-    .toBuffer();
-
-  await req.user.save();
-  sendSuccessResponse(res, 200);
-};
-
-const getAvatar = async (req, res) => {
-  try {
-    const user = await UserModel.findById(req.params.id);
-
-    if (!user || !user.avatar) {
-      throw new Error();
-    }
-
-    res.set('Content-Type', 'image/png');
-    sendSuccessResponse(res, 200, user.avatar);
-  } catch (error) {
-    sendErrorResponse(res, 404);
-  }
-};
-
-const removeAvatar = async (req, res) => {
-  req.user.avatar = undefined;
-  await req.user.save();
-  sendSuccessResponse(res, 200);
-};
+// const uploadAvatar = async (req, res) => {
+//   req.user.avatar = await sharp(req.file.buffer)
+//     .resize({ width: 250, height: 250 })
+//     .png()
+//     .toBuffer();
+//
+//   await req.user.save();
+//   sendSuccessResponse(res, 200);
+// };
+//
+// const getAvatar = async (req, res) => {
+//   try {
+//     const user = await UserModel.findById(req.params.id);
+//
+//     if (!user || !user.avatar) {
+//       throw new Error();
+//     }
+//
+//     res.set('Content-Type', 'image/png');
+//     sendSuccessResponse(res, 200, user.avatar);
+//   } catch (error) {
+//     sendErrorResponse(res, 404);
+//   }
+// };
+//
+// const removeAvatar = async (req, res) => {
+//   req.user.avatar = undefined;
+//   await req.user.save();
+//   sendSuccessResponse(res, 200);
+// };
 
 module.exports = {
-  add,
+  signup,
   login,
   logout,
   logoutAll,
@@ -258,7 +245,7 @@ module.exports = {
   getByID,
   update,
   remove,
-  uploadAvatar,
-  getAvatar,
-  removeAvatar,
+  // uploadAvatar,
+  // getAvatar,
+  // removeAvatar,
 };

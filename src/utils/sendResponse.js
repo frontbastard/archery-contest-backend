@@ -1,15 +1,19 @@
-const sendErrorResponse = (res, code, errorMessage, e = null) =>
-  res.status(code).send({
-    status: 'error',
-    error: errorMessage,
-    e: e?.toString(),
+const { IS_DEVELOPMENT } = require('../common/constants');
+
+const sendErrorResponse = (res, errorCode, error) =>
+  res.status(200).send({
+    errorCode,
+    data: null,
+    success: false,
+    error: IS_DEVELOPMENT && error,
   });
 
-const sendSuccessResponse = (res, code, data, message = 'Successful') =>
-  res.status(code).send({
-    status: 'success',
+const sendSuccessResponse = (res, data) =>
+  res.status(200).send({
+    errorCode: null,
     data,
-    message,
+    success: true,
+    error: null,
   });
 
 module.exports = {

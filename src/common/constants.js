@@ -1,9 +1,19 @@
 module.exports = {
-  MODEL: { USER: 'User', CONTEST: 'Contest' },
+  IS_DEVELOPMENT: process.env.NODE_ENV === 'development',
+  MODEL: {
+    user: 'User',
+    contest: 'Contest',
+  },
   ROLE: {
-    MASTER: 'master',
-    ADMIN: 'admin',
-    MODERATOR: 'moderator',
-    USER: 'user',
+    master: 1,
+    admin: 2,
+    moderator: 3,
+    user: 4,
+  },
+  ERROR_CODE: {
+    unexpectedError: 101,
+    permissionDenied: 102,
+    userNotFound: 201,
+    userNotAuthenticated: 202,
   },
 };

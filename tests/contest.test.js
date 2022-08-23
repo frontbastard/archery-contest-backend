@@ -29,7 +29,7 @@ test('Should create contest for user', async () => {
   expect(contest.hidden).toBe(false);
 });
 
-test('Should fetch user contests', async () => {
+test('Should fetch contests', async () => {
   const response = await request(app)
     .get('/archery-contest-api/contests')
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
@@ -38,7 +38,7 @@ test('Should fetch user contests', async () => {
   expect(response.body.data).toHaveLength(1);
 });
 
-test('Should fetch user contest', async () => {
+test('Should fetch contest', async () => {
   await request(app)
     .get(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
@@ -46,7 +46,7 @@ test('Should fetch user contest', async () => {
     .expect(200);
 });
 
-test('Should fetch user contests', async () => {
+test('Should fetch contests', async () => {
   await request(app)
     .get(`/archery-contest-api/contests`)
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
@@ -54,7 +54,7 @@ test('Should fetch user contests', async () => {
     .expect(200);
 });
 
-test('Should not fetch other user contest', async () => {
+test('Should not fetch other contest', async () => {
   await request(app)
     .get(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
@@ -92,7 +92,7 @@ test('Should if master fetch limit/skip contests', async () => {
   expect(response.body.data[0]).toMatchObject(contestUserTwo);
 });
 
-test('Should if master fetch other user contest', async () => {
+test('Should if master fetch other contest', async () => {
   await request(app)
     .get(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
@@ -122,7 +122,7 @@ test('Should not update invalid contest fields', async () => {
     .expect(400);
 });
 
-test('Should if master update other user contest', async () => {
+test('Should if master update other contest', async () => {
   await request(app)
     .put(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
@@ -132,7 +132,7 @@ test('Should if master update other user contest', async () => {
     .expect(201);
 });
 
-test('Should not update other user contest', async () => {
+test('Should not update other contest', async () => {
   await request(app)
     .put(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
@@ -144,7 +144,7 @@ test('Should not update other user contest', async () => {
   expect(contest).not.toBeNull();
 });
 
-test('Should not update user contest being blocked', async () => {
+test('Should not update contest being blocked', async () => {
   await request(app)
     .put(`/archery-contest-api/contests/${contestUserBlocked._id}`)
     .set('Authorization', `Bearer ${userBlocked.tokens[0].token}`)
@@ -156,7 +156,7 @@ test('Should not update user contest being blocked', async () => {
   expect(contest).not.toBeNull();
 });
 
-test('Should delete user contest', async () => {
+test('Should delete contest', async () => {
   await request(app)
     .delete(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userOne.tokens[0].token}`)
@@ -164,7 +164,7 @@ test('Should delete user contest', async () => {
     .expect(200);
 });
 
-test('Should not delete other user contest', async () => {
+test('Should not delete other contest', async () => {
   await request(app)
     .delete(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
@@ -174,7 +174,7 @@ test('Should not delete other user contest', async () => {
   expect(contest).not.toBeNull();
 });
 
-test('Should not delete user contest being blocked', async () => {
+test('Should not delete contest being blocked', async () => {
   await request(app)
     .delete(`/archery-contest-api/contests/${contestUserBlocked._id}`)
     .set('Authorization', `Bearer ${userBlocked.tokens[0].token}`)
@@ -184,7 +184,7 @@ test('Should not delete user contest being blocked', async () => {
   expect(contest).not.toBeNull();
 });
 
-test('Should if master delete user contest', async () => {
+test('Should if master delete contest', async () => {
   await request(app)
     .delete(`/archery-contest-api/contests/${contestUserOne._id}`)
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)

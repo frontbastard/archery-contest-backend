@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const { UserModel } = require('../../src/models/user.model');
+const { ROLE } = require('../../src/common/constants');
+const UserModel = require('../../src/models/user.model');
 const { ContestModel } = require('../../src/models/contest.model');
 
 const userOneId = new mongoose.Types.ObjectId();
@@ -49,7 +50,7 @@ const userMaster = {
   name: 'Test User Master',
   email: 'testusermaster@email.com',
   password: 'Red12345!',
-  role: 'master',
+  role: ROLE.master,
   tokens: [
     {
       token: jwt.sign({ _id: userMasterId }, process.env.JWT_SECRET),

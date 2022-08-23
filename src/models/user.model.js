@@ -5,11 +5,8 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
-const { MODEL, ROLE } = require('../common/constants');
+const { MODEL, ROLE, ERROR_CODE } = require('../common/constants');
 // const {ContestModel} = require('./contest.model');
-
-const USER_FIELDS = ['name', 'email', 'password', 'dateOfBirth'];
-const MASTER_FIELDS = ['blocked', 'role'];
 
 const userSchema = new Schema(
   {
@@ -56,7 +53,11 @@ const userSchema = new Schema(
       trim: true,
       default: null,
     },
-    blocked: { type: Boolean || null, default: false },
+    blocked: {
+      type: Boolean || null,
+      default: false,
+      immutable: (doc) => doc.role === 1,
+    },
     tokens: [
       {
         token: {
@@ -66,9 +67,11 @@ const userSchema = new Schema(
       },
     ],
     role: {
-      type: String,
+      type: Number,
       required: true,
-      default: ROLE.USER,
+      default: 4,
+      enum: Object.values(ROLE),
+      immutable: (doc) => doc.role === 1,
     },
     avatar: {
       type: Buffer,
@@ -81,7 +84,7 @@ const userSchema = new Schema(
 
 // userSchema.index({ name: 'text', description: 'text' });
 // userSchema.virtual('contests', {
-//   ref: MODEL.CONTEST,
+//   ref: MODEL.contest,
 //   localField: '_id',
 //   foreignField: 'owner',
 // });
@@ -119,13 +122,13 @@ userSchema.statics.findByCredentials = async (email, password) => {
   const user = await UserModel.findOne({ email });
 
   if (!user) {
-    throw new Error('Unable to login');
+    return null;
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    throw new Error('Unable to login');
+    return null;
   }
 
   return user;
@@ -142,14 +145,17 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// // Delete user contests when user is removed
-// userSchema.pre('remove', async function (next) {
-//   const user = this;
-//   await ContestModel.deleteMany({ owner: user._id });
-//
-//   next();
-// });
+userSchema.pre('remove', async function (next) {
+  const user = this;
 
-const UserModel = mongoose.model(MODEL.USER, userSchema);
+  if (user.role === ROLE.master) {
+    next(new Error('Master is non-removable'));
+  }
+  // await ContestModel.deleteMany({ owner: user._id });
 
-module.exports = { UserModel, USER_FIELDS, MASTER_FIELDS };
+  next();
+});
+
+const UserModel = mongoose.model(MODEL.user, userSchema);
+
+module.exports = UserModel;
