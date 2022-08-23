@@ -151,7 +151,10 @@ const update = async (req, res) => {
   try {
     const updatingUser = await UserModel.findOne({ _id: paramUserId });
 
-    if (!updatingUser) {
+    if (
+      !updatingUser ||
+      (!isProfileOwner(req.user, paramUserId) && !canUpdateUser(req.user))
+    ) {
       sendErrorResponse(res, ERROR_CODE.userNotFound, 'User not found');
       return;
     }
