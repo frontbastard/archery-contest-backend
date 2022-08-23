@@ -74,7 +74,6 @@ const logoutAll = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
-  console.log(req.user.name, isMaster(req.user));
   if (!canViewAll(req.user)) {
     sendErrorResponse(res, ERROR_CODE.permissionDenied, 'Permission denied');
     return;
@@ -152,10 +151,7 @@ const update = async (req, res) => {
   try {
     const updatingUser = await UserModel.findOne({ _id: paramUserId });
 
-    if (
-      !updatingUser ||
-      (!isProfileOwner(req.user, paramUserId) && !canUpdateUser(req.user))
-    ) {
+    if (!updatingUser) {
       sendErrorResponse(res, ERROR_CODE.userNotFound, 'User not found');
       return;
     }
@@ -165,7 +161,7 @@ const update = async (req, res) => {
     }
 
     allowedFields.forEach((update) => {
-      if (req.body[update]) {
+      if (req.body[update] !== undefined) {
         updatingUser[update] = req.body[update];
       }
     });
