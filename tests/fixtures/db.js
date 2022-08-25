@@ -50,7 +50,7 @@ const userMaster = {
   name: 'Test User Master',
   email: 'testusermaster@email.com',
   password: 'Red12345!',
-  role: ROLE.master,
+  role: ROLE.Master,
   tokens: [
     {
       token: jwt.sign({ _id: userMasterId }, process.env.JWT_SECRET),

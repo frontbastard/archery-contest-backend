@@ -1,19 +1,19 @@
 const { ROLE } = require('../common/constants');
 
 const canViewContest = (user) =>
-  user.role === ROLE.master ||
-  user.role === ROLE.admin ||
-  user.role === ROLE.moderator;
+  user.role === ROLE.Master ||
+  user.role === ROLE.Admin ||
+  user.role === ROLE.Moderator;
 
 const canUpdateContest = (user) =>
-  user.role === ROLE.master ||
-  user.role === ROLE.admin ||
-  user.role === ROLE.moderator;
+  user.role === ROLE.Master ||
+  user.role === ROLE.Admin ||
+  user.role === ROLE.Moderator;
 
 const canDeleteContest = (user) =>
-  user.role === ROLE.master ||
-  user.role === ROLE.admin ||
-  user.role === ROLE.moderator;
+  user.role === ROLE.Master ||
+  user.role === ROLE.Admin ||
+  user.role === ROLE.Moderator;
 
 module.exports = {
   canViewContest,

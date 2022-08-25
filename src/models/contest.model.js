@@ -19,7 +19,7 @@ const contestSchema = new Schema(
     owner: {
       type: Schema.Types.ObjectId,
       required: true,
-      ref: MODEL.user,
+      ref: MODEL.User,
     },
   },
   {
@@ -27,6 +27,6 @@ const contestSchema = new Schema(
   }
 );
 
-const ContestModel = mongoose.model(MODEL.contest, contestSchema);
+const ContestModel = mongoose.model(MODEL.Contest, contestSchema);
 
 module.exports = { ContestModel, CONTEST_FIELDS };

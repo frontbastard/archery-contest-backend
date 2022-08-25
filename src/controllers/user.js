@@ -27,7 +27,7 @@ const signup = async (req, res) => {
     await user.save();
     sendSuccessResponse(res, { user, token });
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -38,14 +38,14 @@ const login = async (req, res) => {
     const user = await UserModel.findByCredentials(email, password);
 
     if (!user) {
-      sendErrorResponse(res, ERROR_CODE.userNotFound);
+      sendErrorResponse(res, ERROR_CODE.UserNotFound);
       return;
     }
 
     const token = await user.generateAuthToken();
     sendSuccessResponse(res, { user, token });
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -58,7 +58,7 @@ const logout = async (req, res) => {
 
     sendSuccessResponse(res);
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -69,19 +69,19 @@ const logoutAll = async (req, res) => {
 
     sendSuccessResponse(res);
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
 const getAll = async (req, res) => {
   if (!canViewAll(req.user)) {
-    sendErrorResponse(res, ERROR_CODE.permissionDenied, 'Permission denied');
+    sendErrorResponse(res, ERROR_CODE.PermissionDenied, 'Permission denied');
     return;
   }
 
   const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
     JSON.parse(req.query.request);
-  const match = { _id: { $ne: req.user._id }, role: { $ne: ROLE.master } };
+  const match = { _id: { $ne: req.user._id }, role: { $ne: ROLE.Master } };
   const sort = {};
   const skip = pageIndex * pageSize;
   const limit = pageSize;
@@ -113,7 +113,7 @@ const getAll = async (req, res) => {
       items: users.length > 0 ? users : null,
     });
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -126,7 +126,7 @@ const getByID = async (req, res) => {
   }
 
   if (!canViewAll(req.user)) {
-    sendErrorResponse(res, ERROR_CODE.userNotFound);
+    sendErrorResponse(res, ERROR_CODE.UserNotFound);
     return;
   }
 
@@ -134,13 +134,13 @@ const getByID = async (req, res) => {
     const user = await UserModel.findById(paramUserId);
 
     if (!user) {
-      sendErrorResponse(res, ERROR_CODE.userNotFound);
+      sendErrorResponse(res, ERROR_CODE.UserNotFound);
       return;
     }
 
     sendSuccessResponse(res, user);
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -155,7 +155,7 @@ const update = async (req, res) => {
       !updatingUser ||
       (!isProfileOwner(req.user, paramUserId) && !canUpdateUser(req.user))
     ) {
-      sendErrorResponse(res, ERROR_CODE.userNotFound, 'User not found');
+      sendErrorResponse(res, ERROR_CODE.UserNotFound, 'User not found');
       return;
     }
 
@@ -171,7 +171,7 @@ const update = async (req, res) => {
     await updatingUser.save();
     sendSuccessResponse(res, updatingUser);
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -179,7 +179,7 @@ const remove = async (req, res) => {
   const paramUserId = req.params.id;
 
   if (!isProfileOwner(req.user, paramUserId) && !canDeleteUser(req.user)) {
-    sendErrorResponse(res, ERROR_CODE.permissionDenied, 'Permission denied');
+    sendErrorResponse(res, ERROR_CODE.PermissionDenied, 'Permission denied');
     return;
   }
 
@@ -187,12 +187,12 @@ const remove = async (req, res) => {
     const user = await UserModel.findOne({ _id: paramUserId });
 
     if (!user) {
-      sendErrorResponse(res, ERROR_CODE.userNotFound, 'User not found');
+      sendErrorResponse(res, ERROR_CODE.UserNotFound, 'User not found');
       return;
     }
 
     if (isMaster(user)) {
-      sendErrorResponse(res, ERROR_CODE.permissionDenied, 'Permission denied');
+      sendErrorResponse(res, ERROR_CODE.PermissionDenied, 'Permission denied');
       return;
     }
 
@@ -200,7 +200,7 @@ const remove = async (req, res) => {
     // sendCancelEmail(user.email, user.name);
     sendSuccessResponse(res, user._id);
   } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.unexpectedError, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 

@@ -23,7 +23,7 @@ const authUser = async (req, res, next) => {
   } catch (err) {
     sendErrorResponse(
       res,
-      ERROR_CODE.userNotAuthenticated,
+      ERROR_CODE.UserNotAuthenticated,
       'User not authenticated'
     );
   }

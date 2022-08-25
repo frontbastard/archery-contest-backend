@@ -80,7 +80,7 @@ test('Should not login nonexistent user', async () => {
       email: `a${userOne.email}`,
       password: userOne.password,
     });
-  expect(response.body.errorCode).toBe(ERROR_CODE.userNotFound);
+  expect(response.body.errorCode).toBe(ERROR_CODE.UserNotFound);
 });
 
 test('Should fetch user profile', async () => {
@@ -97,7 +97,7 @@ test('Should not fetch other user profile', async () => {
     .get(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
     .send();
-  expect(response.body.errorCode).toBe(ERROR_CODE.userNotFound);
+  expect(response.body.errorCode).toBe(ERROR_CODE.UserNotFound);
 });
 
 test('Should if master fetch other user profile', async () => {
@@ -115,7 +115,7 @@ test('Should if master fetch other user profiles but not master role', async () 
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send();
   expect(response.body.success).toBe(true);
-  const users = await UserModel.find({ role: { $ne: ROLE.master } });
+  const users = await UserModel.find({ role: { $ne: ROLE.Master } });
   expect(users.length).toBe(response.body.data.totalCount);
 });
 
@@ -193,7 +193,7 @@ test('Should not update user if unauthenticated', async () => {
     .send({
       name: 'Changed User Name',
     });
-  expect(response.body.errorCode).toBe(ERROR_CODE.userNotAuthenticated);
+  expect(response.body.errorCode).toBe(ERROR_CODE.UserNotAuthenticated);
 });
 
 test('Should not update other user', async () => {
@@ -203,7 +203,7 @@ test('Should not update other user', async () => {
     .send({
       name: 'Changed User Name',
     });
-  expect(response.body.errorCode).toBe(ERROR_CODE.userNotFound);
+  expect(response.body.errorCode).toBe(ERROR_CODE.UserNotFound);
 });
 
 test('Should not update user with invalid name/email/password', async () => {
@@ -255,7 +255,7 @@ test('Should not delete other user profile', async () => {
     .delete(`/archery-contest-api/users/${userOneId}`)
     .set('Authorization', `Bearer ${userTwo.tokens[0].token}`)
     .send();
-  expect(response.body.errorCode).toBe(ERROR_CODE.permissionDenied);
+  expect(response.body.errorCode).toBe(ERROR_CODE.PermissionDenied);
   const user = await UserModel.findById(userOneId);
   expect(user).not.toBeNull();
 });
@@ -264,7 +264,7 @@ test('Should not delete account for unauthenticated user', async () => {
   const response = await request(app)
     .delete(`/archery-contest-api/users/${userOneId}`)
     .send();
-  expect(response.body.errorCode).toBe(ERROR_CODE.userNotAuthenticated);
+  expect(response.body.errorCode).toBe(ERROR_CODE.UserNotAuthenticated);
 });
 
 test('Should if canDeleteUser delete other user profile', async () => {
@@ -284,7 +284,7 @@ test('Should if master can not delete master profile', async () => {
     .delete(`/archery-contest-api/users/${userMasterId}`)
     .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
     .send();
-  expect(response.body.errorCode).toBe(ERROR_CODE.permissionDenied);
+  expect(response.body.errorCode).toBe(ERROR_CODE.PermissionDenied);
   const user = await UserModel.findById(userMasterId);
   expect(user).not.toBeNull();
 });

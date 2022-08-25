@@ -71,7 +71,7 @@ const userSchema = new Schema(
       required: true,
       default: 4,
       enum: Object.values(ROLE),
-      immutable: (doc) => doc.role === 1,
+      immutable: (doc) => doc.role === ROLE.Master,
     },
     avatar: {
       type: Buffer,
@@ -84,7 +84,7 @@ const userSchema = new Schema(
 
 // userSchema.index({ name: 'text', description: 'text' });
 // userSchema.virtual('contests', {
-//   ref: MODEL.contest,
+//   ref: MODEL.Contest,
 //   localField: '_id',
 //   foreignField: 'owner',
 // });
@@ -148,7 +148,7 @@ userSchema.pre('save', async function (next) {
 userSchema.pre('remove', async function (next) {
   const user = this;
 
-  if (user.role === ROLE.master) {
+  if (user.role === ROLE.Master) {
     next(new Error('Master is non-removable'));
   }
   // await ContestModel.deleteMany({ owner: user._id });
@@ -156,6 +156,6 @@ userSchema.pre('remove', async function (next) {
   next();
 });
 
-const UserModel = mongoose.model(MODEL.user, userSchema);
+const UserModel = mongoose.model(MODEL.User, userSchema);
 
 module.exports = UserModel;
