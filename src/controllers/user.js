@@ -38,7 +38,12 @@ const login = async (req, res) => {
     const user = await UserModel.findByCredentials(email, password);
 
     if (!user) {
-      sendErrorResponse(res, ERROR_CODE.UserNotFound);
+      sendErrorResponse(res, ERROR_CODE.UserNotFound, 'User not found');
+      return;
+    }
+
+    if (user.blocked) {
+      sendErrorResponse(res, ERROR_CODE.UserIsBlocked, 'User is blocked');
       return;
     }
 

@@ -3,55 +3,72 @@ const {
   sendSuccessResponse,
   sendErrorResponse,
 } = require('../utils/sendResponse');
+const { ERROR_CODE } = require('../common/constants');
 const {
-  canViewContest,
+  canViewAll,
   canUpdateContest,
   canDeleteContest,
 } = require('../permissions/contest');
 
 const add = async (req, res) => {
-  const contest = new ContestModel({ ...req.body, owner: req.user._id });
+  const contest = new ContestModel({
+    ...req.body,
+    owner: {
+      _id: req.user._id,
+      name: req.user.name,
+    },
+  });
 
   await contest.save();
 
   try {
-    sendSuccessResponse(res, 201, contest);
+    sendSuccessResponse(res, contest);
   } catch (error) {
-    sendErrorResponse(res, 400);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
 const getAll = async (req, res) => {
-  // GET /contests?hidden=true
-  // GET /contests?limit=10&skip=0
-  // GET /contests/sortBy=createdAt:desc
+  const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
+    JSON.parse(req.query.request);
   const match = {};
   const sort = {};
-  const isHidden = req.query.hidden;
+  const skip = pageIndex * pageSize;
+  const limit = pageSize;
 
-  if (isHidden) {
-    match.hidden = isHidden === 'true';
+  if (!canViewAll(req.user)) {
+    match.owner = req.user.owner;
   }
 
-  if (!canViewContest(req.user)) {
-    match.owner = req.user._id;
+  if (filter && filter.hidden !== null) {
+    match.hidden = filter.hidden;
   }
 
-  if (req.query.sortBy) {
-    const [prop, value] = req.query.sortBy.split(':');
+  if (searchTerm) {
+    match.$or = [
+      { name: { $regex: searchTerm, $options: 'i' } },
+      { owner: { $regex: searchTerm, $options: 'i' } },
+      { description: { $regex: searchTerm, $options: 'i' } },
+    ];
+  }
 
-    sort[prop] = value === 'desc' ? -1 : 1;
+  if (sortAsc) {
+    sort[sortTerm] = sortAsc === 'asc' ? 1 : -1;
   }
 
   try {
-    const contests = await ContestModel.find(match)
+    const contests = await ContestModel.find({ match })
       .sort(sort)
-      .skip(parseInt(req.query.skip, 10))
-      .limit(parseInt(req.query.limit, 10));
+      .skip(skip)
+      .limit(limit);
+    const counter = await ContestModel.count(match);
 
-    sendSuccessResponse(res, 200, contests);
+    sendSuccessResponse(res, {
+      totalCount: counter,
+      items: contests.length > 0 ? contests : null,
+    });
   } catch (error) {
-    sendErrorResponse(res, 500, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -59,7 +76,7 @@ const get = async (req, res) => {
   const _id = req.params.id;
   const match = { _id };
 
-  if (!canViewContest(req.user)) {
+  if (!canViewAll(req.user)) {
     match.owner = req.user._id;
   }
 
@@ -67,13 +84,13 @@ const get = async (req, res) => {
     const contest = await ContestModel.findOne(match);
 
     if (!contest) {
-      sendErrorResponse(res, 404);
+      sendErrorResponse(res, ERROR_CODE.ContestNotFound, 'Contest not found');
       return;
     }
 
-    sendSuccessResponse(res, 200, contest);
+    sendSuccessResponse(res, contest);
   } catch (error) {
-    sendErrorResponse(res, 500, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -103,7 +120,7 @@ const update = async (req, res) => {
     const contest = await ContestModel.findOne(match);
 
     if (!contest) {
-      sendErrorResponse(res, 404);
+      sendErrorResponse(res, ERROR_CODE.ContestNotFound, 'Contest not found');
       return;
     }
 
@@ -111,9 +128,9 @@ const update = async (req, res) => {
       contest[update] = req.body[update];
     });
     await contest.save();
-    sendSuccessResponse(res, 201, contest);
+    sendSuccessResponse(res, contest);
   } catch (error) {
-    sendErrorResponse(res, 400);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 
@@ -134,13 +151,13 @@ const remove = async (req, res) => {
     const contest = await ContestModel.findOneAndDelete(match);
 
     if (!contest) {
-      sendErrorResponse(res, 404);
+      sendErrorResponse(res, ERROR_CODE.ContestNotFound, 'Contest not found');
       return;
     }
 
-    sendSuccessResponse(res, 200, contest);
+    sendSuccessResponse(res, contest);
   } catch (error) {
-    sendErrorResponse(res, 500, error);
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }
 };
 

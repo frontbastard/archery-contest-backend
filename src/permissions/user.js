@@ -1,6 +1,7 @@
 const { ROLE } = require('../common/constants');
 
-const isProfileOwner = (user, id) => user._id.toString() === id;
+const isProfileOwner = (user, userParamId) =>
+  user._id.toString() === userParamId;
 const isMaster = (user) => user.role === ROLE.Master;
 const isAdmin = (user) => user.role === ROLE.Admin;
 
