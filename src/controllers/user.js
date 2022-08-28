@@ -79,13 +79,20 @@ const logoutAll = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
+  const { request } = req.query;
+
+  if (!request) {
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, 'Incorrect request');
+    return;
+  }
+
   if (!canViewAll(req.user)) {
     sendErrorResponse(res, ERROR_CODE.PermissionDenied, 'Permission denied');
     return;
   }
 
   const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
-    JSON.parse(req.query.request);
+    JSON.parse(request);
   const match = { _id: { $ne: req.user._id }, role: { $ne: ROLE.Master } };
   const sort = {};
   const skip = pageIndex * pageSize;
@@ -165,7 +172,11 @@ const update = async (req, res) => {
     }
 
     if (canUpdateUser(req.user)) {
-      allowedFields.push('blocked', 'role');
+      allowedFields.push('blocked');
+
+      if (req.body.role !== ROLE.Master) {
+        allowedFields.push('role');
+      }
     }
 
     allowedFields.forEach((update) => {

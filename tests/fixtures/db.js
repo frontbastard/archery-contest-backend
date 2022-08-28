@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { ROLE } = require('../../src/common/constants');
 const UserModel = require('../../src/models/user.model');
-const { ContestModel } = require('../../src/models/contest.model');
+const ContestModel = require('../../src/models/contest.model');
 
 const userOneId = new mongoose.Types.ObjectId();
 const userOne = {
@@ -63,21 +63,21 @@ const contestUserOne = {
   name: 'Test contest 1',
   description: 'Test contest description 1',
   hidden: false,
-  owner: userOne._id,
+  owner: { _id: userOne._id, name: userOne.name },
 };
 const contestUserTwo = {
   _id: new mongoose.Types.ObjectId(),
   name: 'Test contest 3',
   description: 'Test contest description 3',
   hidden: false,
-  owner: userTwo._id,
+  owner: { _id: userTwo._id, name: userTwo.name },
 };
 const contestUserBlocked = {
   _id: new mongoose.Types.ObjectId(),
   name: 'Test contest blocked',
   description: 'Test contest description blocked',
   hidden: false,
-  owner: userBlocked._id,
+  owner: { _id: userBlocked._id, name: userBlocked.name },
 };
 
 const setupDatabase = async () => {
@@ -96,6 +96,7 @@ module.exports = {
   userOneId,
   userTwoId,
   userMasterId,
+  userBlockedId,
   userOne,
   userTwo,
   userBlocked,

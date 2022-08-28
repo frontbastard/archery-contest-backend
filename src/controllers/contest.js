@@ -1,10 +1,11 @@
-const { ContestModel, CONTEST_FIELDS } = require('../models/contest.model');
+const ContestModel = require('../models/contest.model');
 const {
   sendSuccessResponse,
   sendErrorResponse,
 } = require('../utils/sendResponse');
 const { ERROR_CODE } = require('../common/constants');
 const {
+  isOwner,
   canViewAll,
   canUpdateContest,
   canDeleteContest,
@@ -29,8 +30,15 @@ const add = async (req, res) => {
 };
 
 const getAll = async (req, res) => {
+  const { request } = req.query;
+
+  if (!request) {
+    sendErrorResponse(res, ERROR_CODE.UnexpectedError, 'Incorrect request');
+    return;
+  }
+
   const { searchTerm, sortTerm, sortAsc, pageIndex, pageSize, filter } =
-    JSON.parse(req.query.request);
+    JSON.parse(request);
   const match = {};
   const sort = {};
   const skip = pageIndex * pageSize;
@@ -73,15 +81,10 @@ const getAll = async (req, res) => {
 };
 
 const get = async (req, res) => {
-  const _id = req.params.id;
-  const match = { _id };
-
-  if (!canViewAll(req.user)) {
-    match.owner = req.user._id;
-  }
+  const contestParamId = req.params.id;
 
   try {
-    const contest = await ContestModel.findOne(match);
+    const contest = await ContestModel.findOne({ _id: contestParamId });
 
     if (!contest) {
       sendErrorResponse(res, ERROR_CODE.ContestNotFound, 'Contest not found');
@@ -95,38 +98,28 @@ const get = async (req, res) => {
 };
 
 const update = async (req, res) => {
-  const _id = req.params.id;
-  const match = { _id };
-  const updates = Object.keys(req.body);
-  const isValidOperation = updates.every((update) =>
-    CONTEST_FIELDS.includes(update)
-  );
-
-  if (req.user.blocked) {
-    sendErrorResponse(res, 402, 'Blocked');
-    return;
-  }
-
-  if (!isValidOperation) {
-    sendErrorResponse(res, 400, 'Invalid updates');
-    return;
-  }
-
-  if (!canUpdateContest(req.user)) {
-    match.owner = req.user._id;
-  }
+  const contestParamId = req.params.id;
+  const allowedFields = ['name', 'description', 'hidden'];
 
   try {
-    const contest = await ContestModel.findOne(match);
+    const contest = await ContestModel.findOne({ _id: contestParamId });
 
     if (!contest) {
       sendErrorResponse(res, ERROR_CODE.ContestNotFound, 'Contest not found');
       return;
     }
 
-    updates.forEach((update) => {
-      contest[update] = req.body[update];
+    if (!canUpdateContest(req.user) && !isOwner(req.user, contest.owner._id)) {
+      sendErrorResponse(res, ERROR_CODE.PermissionDenied, 'Permission denied');
+      return;
+    }
+
+    allowedFields.forEach((update) => {
+      if (req.body[update] !== undefined) {
+        contest[update] = req.body[update];
+      }
     });
+
     await contest.save();
     sendSuccessResponse(res, contest);
   } catch (error) {
@@ -135,23 +128,20 @@ const update = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-  const _id = req.params.id;
-  const match = { _id };
-
-  if (req.user.blocked) {
-    sendErrorResponse(res, 402, 'Blocked');
-    return;
-  }
-
-  if (!canDeleteContest(req.user)) {
-    match.owner = req.user._id;
-  }
+  const paramContentId = req.params.id;
 
   try {
-    const contest = await ContestModel.findOneAndDelete(match);
+    const contest = await ContestModel.findOneAndDelete({
+      _id: paramContentId,
+    });
 
     if (!contest) {
       sendErrorResponse(res, ERROR_CODE.ContestNotFound, 'Contest not found');
+      return;
+    }
+
+    if (!canDeleteContest(req.user) && !isOwner(req.user, contest.owner._id)) {
+      sendErrorResponse(res, ERROR_CODE.PermissionDenied, 'Permission denied');
       return;
     }
 

@@ -5,9 +5,11 @@ const UserModel = require('../src/models/user.model');
 const {
   userOneId,
   userMasterId,
+  userBlockedId,
   userOne,
   userTwo,
   userMaster,
+  userBlocked,
   setupDatabase,
 } = require('./fixtures/db');
 
@@ -71,6 +73,16 @@ test('Should login existing user', async () => {
   expect(response.body.data.token).toBe(
     user.tokens[user.tokens.length - 1].token
   );
+});
+
+test('Should not login if blocked', async () => {
+  const response = await request(app)
+    .post('/archery-contest-api/users/login')
+    .send({
+      email: userBlocked.email,
+      password: userBlocked.password,
+    });
+  expect(response.body.success).toBe(false);
 });
 
 test('Should not login nonexistent user', async () => {
@@ -185,6 +197,16 @@ test('Should not update "role" and "blocked" fields', async () => {
     blocked: false,
     role: 4,
   });
+});
+
+test('Should not update role to "master"', async () => {
+  const response = await request(app)
+    .put(`/archery-contest-api/users/${userOneId}`)
+    .set('Authorization', `Bearer ${userMaster.tokens[0].token}`)
+    .send({
+      role: 1,
+    });
+  expect(response.body.data.role).toBe(ROLE.User);
 });
 
 test('Should not update user if unauthenticated', async () => {

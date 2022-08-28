@@ -5,7 +5,7 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const uniqueValidator = require('mongoose-unique-validator');
 const jwt = require('jsonwebtoken');
-const { MODEL, ROLE, ERROR_CODE } = require('../common/constants');
+const { MODEL, ROLE } = require('../common/constants');
 // const {ContestModel} = require('./contest.model');
 
 const userSchema = new Schema(
