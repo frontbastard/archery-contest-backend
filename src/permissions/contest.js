@@ -1,7 +1,7 @@
 const { ROLE } = require('../common/constants');
 
 const isOwner = (user, contestOwnerId) =>
-  user._id.toString() === contestOwnerId.toString();
+  user._id.toHexString() === contestOwnerId.toHexString();
 const isMaster = (user) => user.role === ROLE.Master;
 const isAdmin = (user) => user.role === ROLE.Admin;
 const isModerator = (user) => user.role === ROLE.Moderator;
