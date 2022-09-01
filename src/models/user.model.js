@@ -10,6 +10,9 @@ const { MODEL, ROLE } = require('../common/constants');
 
 const userSchema = new Schema(
   {
+    id: {
+      type: Schema.Types.ObjectId,
+    },
     name: {
       type: String,
       required: true,
@@ -37,7 +40,7 @@ const userSchema = new Schema(
       validate(value) {
         if (
           !validator.isStrongPassword(value, {
-            minLength: 8,
+            minlength: 8,
             maxlength: 30,
             minLowercase: 1,
             minUppercase: 1,
@@ -96,6 +99,8 @@ userSchema.methods.toJSON = function () {
   const user = this;
   const userObject = user.toObject();
 
+  userObject.id = userObject._id;
+  delete userObject._id;
   delete userObject.password;
   delete userObject.tokens;
   delete userObject.avatar;

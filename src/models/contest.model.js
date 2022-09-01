@@ -6,6 +6,9 @@ const { MODEL } = require('../common/constants');
 
 const contestSchema = new Schema(
   {
+    id: {
+      type: Schema.Types.ObjectId,
+    },
     name: {
       type: String,
       required: true,
@@ -29,6 +32,15 @@ const contestSchema = new Schema(
     timestamps: true,
   }
 );
+
+contestSchema.methods.toJSON = function () {
+  const contest = this;
+  const contestObject = contest.toObject();
+
+  contestObject.id = contestObject._id;
+  delete contestObject._id;
+  return contestObject;
+};
 
 const ContestModel = mongoose.model(MODEL.Contest, contestSchema);
 
