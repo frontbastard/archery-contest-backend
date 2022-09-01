@@ -14,10 +14,8 @@ const {
 const add = async (req, res) => {
   const contest = new ContestModel({
     ...req.body,
-    owner: {
-      _id: req.user._id,
-      name: req.user.name,
-    },
+    ownerId: req.user._id,
+    ownerName: req.user.name,
   });
 
   await contest.save();
@@ -44,8 +42,8 @@ const getAll = async (req, res) => {
   const skip = pageIndex * pageSize;
   const limit = pageSize;
 
-  if (!canViewAll(req.user)) {
-    match.owner = req.user.owner;
+  if (!canViewAll(req.user) || (filter && !filter.public)) {
+    match.ownerId = req.user._id;
   }
 
   if (filter && filter.hidden !== null) {
@@ -55,8 +53,7 @@ const getAll = async (req, res) => {
   if (searchTerm) {
     match.$or = [
       { name: { $regex: searchTerm, $options: 'i' } },
-      { owner: { $regex: searchTerm, $options: 'i' } },
-      { description: { $regex: searchTerm, $options: 'i' } },
+      { ownerName: { $regex: searchTerm, $options: 'i' } },
     ];
   }
 
@@ -65,7 +62,7 @@ const getAll = async (req, res) => {
   }
 
   try {
-    const contests = await ContestModel.find({ match })
+    const contests = await ContestModel.find(match)
       .sort(sort)
       .skip(skip)
       .limit(limit);
@@ -145,7 +142,7 @@ const remove = async (req, res) => {
       return;
     }
 
-    sendSuccessResponse(res, contest);
+    sendSuccessResponse(res, contest._id);
   } catch (error) {
     sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
   }

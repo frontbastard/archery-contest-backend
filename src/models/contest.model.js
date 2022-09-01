@@ -14,17 +14,15 @@ const contestSchema = new Schema(
     },
     description: { type: String, trim: true, default: '' },
     hidden: { type: Boolean || null, default: false },
-    owner: {
-      _id: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        ref: MODEL.User,
-      },
-      name: {
-        type: String,
-        required: true,
-        ref: MODEL.User,
-      },
+    ownerId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: MODEL.User,
+    },
+    ownerName: {
+      type: String,
+      required: true,
+      ref: MODEL.User,
     },
   },
   {
