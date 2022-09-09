@@ -1,0 +1,483 @@
+{
+	"info": {
+		"_postman_id": "ccfb9fb6-3ad0-473f-8418-6c5c545a3c83",
+		"name": "Archery Contest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "6679097"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Avatar",
+					"item": [
+						{
+							"name": "Upload avatar",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "avatar",
+											"type": "file",
+											"src": "/Users/pavlosokolov/Downloads/avatar.png"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/users/profile/avatar",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"profile",
+										"avatar"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete avatar",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/users/profile/avatar",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"profile",
+										"avatar"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Read avatar",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{url}}/users/62e6e5e315692235ddf12aee/avatar",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"users",
+										"62e6e5e315692235ddf12aee",
+										"avatar"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Login user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"",
+									"if (response.success) {",
+									"    pm.environment.set('authToken', response.data.token)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"ps@acemail.com\",\n    \"password\": \"Red12345!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/users/login",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.environment.set('authToken', pm.response.json().token)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"elvis@email.com\",\n    \"password\": \"Red12345!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/users/logout",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout user (all devices)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.environment.set('authToken', pm.response.json().token)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/users/logout-all",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"logout-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"",
+									"if (response.success) {",
+									"    pm.environment.set('authToken', response.data.token)",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"test\",\n    \"email\": \"test1234567890@acemail.com\",\n    \"password\": \"Red12345!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/users",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users?request={\"pageIndex\":0,\"pageSize\":10,\"filter\":{\"blocked\": null}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "request",
+									"value": "{\"pageIndex\":0,\"pageSize\":10,\"filter\":{\"blocked\": null}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users/62e6e5b115692235ddf12adc",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"62e6e5b115692235ddf12adc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update user",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"blocked\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/users/62e6e5cf15692235ddf12ae5",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"62e6e5cf15692235ddf12ae5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete user",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/users/62ebab6f73c2dae7e10bed79",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"users",
+								"62ebab6f73c2dae7e10bed79"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Contest",
+			"item": [
+				{
+					"name": "Create contest",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Archery Tournament\",\n    \"description\": \"Another one tournament will take place in a beautifull park.\",\n    \"hidden\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/contests",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"contests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read contests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/contests",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"contests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Read contest",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/contests/62e6bd4507ca70e19317c415",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"contests",
+								"62e6bd4507ca70e19317c415"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update contest",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hidden\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/contests/62e6e5cf15692235ddf12ae5",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"contests",
+								"62e6e5cf15692235ddf12ae5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete contest",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/contests/62ec560b6e68b272d45c81f1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"contests",
+								"62ec560b6e68b272d45c81f1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{authToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
