@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "env-cmd -f ./.config/dev.env nodemon src/index.js",
-    "prod": "node src/index.js",
+    "build": "env-cmd -f ./.config/build.env nodemon src/index.js",
     "lint": "eslint --fix --ext .js,.jsx .",
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand"
   },
