@@ -12,6 +12,8 @@ const {
   canUpdateUser,
   canDeleteUser,
 } = require('../permissions/user');
+const wrapResponseAsync = require('../utils/responseWrapper');
+const CustomError = require('../utils/customError');
 // const { sendCancelEmail } = require('../emails/account');
 
 const signup = async (req, res) => {
@@ -129,32 +131,17 @@ const getAll = async (req, res) => {
   }
 };
 
-const getByID = async (req, res) => {
-  const paramUserId = req.params.id;
-
-  if (isProfileOwner(req.user, paramUserId)) {
-    sendSuccessResponse(res, req.user);
-    return;
-  }
-
-  if (!canViewAll(req.user)) {
-    sendErrorResponse(res, ERROR_CODE.UserNotFound);
-    return;
-  }
-
-  try {
+const getByID = (req, res) =>
+  wrapResponseAsync(req, res, [ROLE.Master, ROLE.Admin], async () => {
+    const paramUserId = req.params.id;
     const user = await UserModel.findById(paramUserId);
 
     if (!user) {
-      sendErrorResponse(res, ERROR_CODE.UserNotFound);
-      return;
+      throw new CustomError('User not found', ERROR_CODE.UserNotFound);
     }
 
-    sendSuccessResponse(res, user);
-  } catch (error) {
-    sendErrorResponse(res, ERROR_CODE.UnexpectedError, error);
-  }
-};
+    return user;
+  });
 
 const update = async (req, res) => {
   const paramUserId = req.params.id;
